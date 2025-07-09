@@ -1,0 +1,32 @@
+{
+  "name": "fronsciers-nft-scripts",
+  "version": "1.0.0",
+  "description": "NFT metadata management scripts for Fronsciers DOCI manuscripts",
+  "main": "nft-metadata.js",
+  "type": "module",
+  "scripts": {
+    "create-metadata": "node nft-metadata.js",
+    "listen": "node nft-metadata.js --listen",
+    "setup": "npm install && ./metaboss-nft.sh setup"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.91.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  },
+  "bin": {
+    "fronsciers-nft": "./nft-metadata.js"
+  },
+  "keywords": [
+    "solana",
+    "nft",
+    "metaboss",
+    "metadata",
+    "fronsciers",
+    "doci",
+    "academic-publishing"
+  ],
+  "author": "Fronsciers Team",
+  "license": "ISC"
+}
