@@ -48,6 +48,7 @@ export default function CTA() {
     <div
       ref={ctaRef}
       className="min-h-[50vh] flex items-end justify-center bg-background pt-16"
+      id="contact"
     >
       <div
         ref={containerRef}
@@ -58,7 +59,7 @@ export default function CTA() {
             Ready to Transform Your Career?
           </h1>
           <p className="text-lg lg:text-xl text-accent-foreground/80 mb-8 max-w-2xl mx-auto">
-            Join thousands of developers who found their dream jobs through
+            Join thousands of IT Talents who found their dream jobs through
             DevDirect's AI-powered matching platform.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -68,13 +69,6 @@ export default function CTA() {
             >
               Get Started for Free
               <ArrowUpRight className="w-5 h-5 ml-2" />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-accent-foreground text-accent-foreground hover:bg-accent-foreground hover:text-accent rounded-full px-8 py-6 text-lg"
-            >
-              Learn More
             </Button>
           </div>
         </div>
@@ -90,7 +84,7 @@ export default function CTA() {
                 </span>
               </div>
               <p className="text-accent-foreground/70 text-sm leading-relaxed max-w-md">
-                AI-powered platform connecting talented developers with their
+                AI-powered platform connecting talented IT Talents with their
                 perfect career opportunities. Join the future of tech
                 recruitment.
               </p>
@@ -126,7 +120,7 @@ export default function CTA() {
                     href="#"
                     className="text-accent-foreground/70 hover:text-accent-foreground transition-colors"
                   >
-                    For Developers
+                    For IT Talents
                   </Link>
                 </li>
                 <li>
@@ -143,14 +137,6 @@ export default function CTA() {
                     className="text-accent-foreground/70 hover:text-accent-foreground transition-colors"
                   >
                     How It Works
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="#"
-                    className="text-accent-foreground/70 hover:text-accent-foreground transition-colors"
-                  >
-                    Success Stories
                   </Link>
                 </li>
               </ul>
@@ -203,7 +189,7 @@ export default function CTA() {
               © 2025 DevDirect. All rights reserved.
             </p>
             <p className="text-sm text-accent-foreground/60">
-              Made with ❤️ for the developer community
+              Made with ❤️ for the IT Talent community
             </p>
           </div>
         </div>

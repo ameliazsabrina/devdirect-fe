@@ -28,7 +28,7 @@ import {
 
 gsap.registerPlugin(ScrollTrigger);
 
-const developerSteps = [
+const DeveloperSteps = [
   {
     number: 1,
     icon: UserPlus,
@@ -143,7 +143,7 @@ export default function Webflow() {
   const StepCard = ({
     step,
   }: {
-    step: (typeof developerSteps)[0];
+    step: (typeof DeveloperSteps)[0];
     index: number;
   }) => {
     const Icon = step.icon;
@@ -173,7 +173,7 @@ export default function Webflow() {
   };
 
   return (
-    <section ref={sectionRef} className="py-16 bg-background">
+    <section ref={sectionRef} className="py-16 bg-background" id="how-it-works">
       <div className="max-w-6xl mx-auto px-8">
         <ScrollReveal delay={0}>
           <div className="text-center mb-12">
@@ -181,20 +181,20 @@ export default function Webflow() {
               Cara Kerja DevDirect
             </h1>
             <p className="text-lg text-muted-foreground">
-              Langkah mudah menghubungkan developer dengan peluang karier
+              Langkah mudah menghubungkan IT Talent dengan peluang karier
             </p>
           </div>
         </ScrollReveal>
 
         <ScrollReveal delay={200}>
-          <Tabs defaultValue="developer" className="w-full">
+          <Tabs defaultValue="IT Talent" className="w-full">
             <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
               <TabsTrigger
-                value="developer"
+                value="IT Talent"
                 className="flex items-center gap-2"
               >
                 <Code className="w-4 h-4" />
-                Untuk Developer
+                Untuk IT Talent
               </TabsTrigger>
               <TabsTrigger
                 value="recruiter"
@@ -205,10 +205,10 @@ export default function Webflow() {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="developer">
+            <TabsContent value="IT Talent">
               <div className="text-center mb-8">
                 <h2 className="text-2xl lg:text-3xl font-semibold text-foreground mb-2">
-                  Alur Developer
+                  Alur IT Talent
                 </h2>
                 <p className="text-muted-foreground">
                   Dari membuat profil hingga mendapat pekerjaan impian
@@ -216,7 +216,7 @@ export default function Webflow() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-                {developerSteps.map((step, index) => (
+                {DeveloperSteps.map((step, index) => (
                   <StepCard key={step.number} step={step} index={index} />
                 ))}
               </div>

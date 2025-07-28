@@ -4,17 +4,19 @@ import Image from "next/image";
 import PilotLoading from "@/components/pilot-loading";
 import { Button } from "@/components/ui/button";
 import { ArrowUpRight } from "lucide-react";
+import { NavbarDemo } from "@/components/header";
 
 export default function Hero() {
   return (
     <div className="min-h-screen relative overflow-hidden">
+      <NavbarDemo />
       <div className="relative z-10 min-h-screen flex">
         <div className="flex-1 p-8 lg:p-16 flex flex-col justify-between">
           <div className="space-y-8">
             <h1 className="text-4xl lg:text-6xl xl:text-7xl font-bold text-foreground leading-tight animate-slide-in-left-up">
               Temukan Karier
               <br />
-              Developer Impianmu
+              IT Talent Impianmu
             </h1>
 
             {/* Statistics from left */}
@@ -25,7 +27,7 @@ export default function Hero() {
                     500+
                   </span>
                   <span className="text-sm lg:text-base text-muted-foreground">
-                    Developer Terkoneksi
+                    IT Talent Terkoneksi
                   </span>
                 </div>
               </div>
@@ -75,7 +77,7 @@ export default function Hero() {
             {/* Description p from right up */}
             <p className="text-lg lg:text-xl text-muted-foreground leading-relaxed animate-slide-in-right-up animation-delay-300">
               Lagi cari jalan karier atau talent yang cocok? DevDirect pakai AI
-              buat nyocokin developer hebat dengan tim yang butuh mereka.
+              buat nyocokin IT Talent hebat dengan tim yang butuh mereka.
               <br />
               <span className="font-semibold">Simple, cepat, tepat.</span>
             </p>
@@ -104,7 +106,7 @@ export default function Hero() {
         <div className="relative">
           <Image
             src="/hero-pic.png"
-            alt="Ruang Kerja Developer"
+            alt="Ruang Kerja IT Talent"
             width={900}
             height={450}
             className="object-cover rounded-2xl mb-24"

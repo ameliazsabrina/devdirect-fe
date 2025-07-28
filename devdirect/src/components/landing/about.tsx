@@ -73,7 +73,11 @@ export default function About() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="relative min-h-screen overflow-hidden">
+    <section
+      ref={sectionRef}
+      className="relative min-h-screen overflow-hidden"
+      id="about"
+    >
       <div className="relative z-10 w-full md:w-3/5 lg:w-1/2 p-8 lg:p-16 flex flex-col justify-center min-h-screen">
         <div className="space-y-8">
           <p
@@ -89,7 +93,7 @@ export default function About() {
           >
             Solusi Cerdas untuk
             <br />
-            Karier Developer
+            Karier IT Talent
           </h3>
 
           <p
@@ -97,8 +101,8 @@ export default function About() {
             className="text-lg lg:text-xl text-muted-foreground leading-relaxed opacity-60"
           >
             DevDirect mengatasi masalah gap skill dan kesulitan matching antara
-            developer dan perusahaan melalui platform AI yang menganalisis
-            kemampuan setiap developer secara mendalam, memberikan rekomendasi
+            IT Talent dan perusahaan melalui platform AI yang menganalisis
+            kemampuan setiap IT Talent secara mendalam, memberikan rekomendasi
             pembelajaran yang personal, dan mencocokkan mereka dengan perusahaan
             yang tepat berdasarkan skill dan minat.
           </p>
@@ -127,7 +131,7 @@ export default function About() {
           >
             <Image
               src="/clip-image.jpg"
-              alt="Developer working"
+              alt="IT Talent working"
               fill
               className="object-cover"
               sizes="(max-width: 768px) 500px, 600px"

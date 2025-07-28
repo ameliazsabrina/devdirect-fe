@@ -2,7 +2,7 @@ import Hero from "@/components/landing/hero";
 import Problem from "@/components/landing/problem";
 import About from "@/components/landing/about";
 import Info from "@/components/landing/info";
-import ApplicantFlow from "@/components/webflow";
+import ApplicantFlow from "@/components/landing/webflow";
 import Team from "@/components/landing/team";
 import CTA from "@/components/landing/cta";
 
