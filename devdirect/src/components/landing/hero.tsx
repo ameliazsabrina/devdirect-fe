@@ -4,12 +4,13 @@ import Image from "next/image";
 import PilotLoading from "@/components/pilot-loading";
 import { Button } from "@/components/ui/button";
 import { ArrowUpRight } from "lucide-react";
-import { NavbarDemo } from "@/components/header";
+import { Header } from "@/components/header";
+import { toast } from "sonner";
 
 export default function Hero() {
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      <NavbarDemo />
+    <div className="min-h-screen relative overflow-hidden" id="hero">
+      <Header />
       <div className="relative z-10 min-h-screen flex">
         <div className="flex-1 p-8 lg:p-16 flex flex-col justify-between">
           <div className="space-y-8">
@@ -94,6 +95,11 @@ export default function Hero() {
               variant="secondary"
               size="lg"
               className="text-xl hover:scale-105 transition-transform duration-200 rounded-full px-8 py-4"
+              onClick={() => {
+                toast.success("Test Toast!", {
+                  description: "This is a test to see if toasts work",
+                });
+              }}
             >
               Mulai Perjalananmu <ArrowUpRight className="w-6 h-6" />
             </Button>

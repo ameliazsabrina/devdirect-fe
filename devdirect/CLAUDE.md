@@ -205,12 +205,8 @@ DevDirect is a comprehensive AI-powered platform that bridges the gap between IT
 │   ├── login/
 │   └── register/
 ├── (applicant)/
-│   ├── onboarding/
-│   │   ├── cv-upload/
-│   │   ├── khs-upload/
-│   │   ├── preview/
-│   │   ├── analysis/
-│   │   └── career-selection/
+│   ├── onboarding/           # Single page with 5 progress tabs
+│   │   # Steps: CV Upload → KHS Upload → Preview → Analysis → Career Selection
 │   ├── dashboard/
 │   └── profile/
 ├── (recruiter)/

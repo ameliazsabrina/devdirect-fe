@@ -11,8 +11,10 @@ import {
   MobileNavMenu,
 } from "@/components/ui/resizeable-navbar";
 import { useState } from "react";
+import RegisterDialog from "@/components/auth/registerDialog";
+import LoginDialog from "@/components/auth/loginDialog";
 
-export function NavbarDemo() {
+export function Header() {
   const navItems = [
     {
       name: "About",
@@ -29,6 +31,8 @@ export function NavbarDemo() {
   ];
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState(false);
+  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
 
   return (
     <div className="relative w-full mt-4">
@@ -37,8 +41,24 @@ export function NavbarDemo() {
           <NavbarLogo />
           <NavItems items={navItems} />
           <div className="flex items-center gap-4">
-            <NavbarButton variant="primary">I'm an IT Talent</NavbarButton>
-            <NavbarButton variant="secondary">I'm a Recruiter</NavbarButton>
+            <RegisterDialog
+              open={isRegisterDialogOpen}
+              onOpenChange={setIsRegisterDialogOpen}
+              onShowLogin={() => setIsLoginDialogOpen(true)}
+              trigger={
+                <NavbarButton
+                  variant="primary"
+                  className="bg-primary text-accent rounded-full"
+                  onClick={() => setIsRegisterDialogOpen(true)}
+                >
+                  Mulai Sekarang!
+                </NavbarButton>
+              }
+            />
+            <LoginDialog
+              open={isLoginDialogOpen}
+              onOpenChange={setIsLoginDialogOpen}
+            />
           </div>
         </NavBody>
 
@@ -60,26 +80,33 @@ export function NavbarDemo() {
                 key={`mobile-link-${idx}`}
                 href={item.link}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="relative text-neutral-600 dark:text-neutral-300"
+                className="relative text-neutral-600 dark:text-neutral-300 items-center justify-center text-center"
               >
-                <span className="block">{item.name}</span>
+                <span className="block text-center">{item.name}</span>
               </a>
             ))}
             <div className="flex w-full flex-col gap-4">
-              <NavbarButton
-                onClick={() => setIsMobileMenuOpen(false)}
-                variant="primary"
-                className="w-full"
-              >
-                I'm an IT Talent
-              </NavbarButton>
-              <NavbarButton
-                onClick={() => setIsMobileMenuOpen(false)}
-                variant="secondary"
-                className="w-full"
-              >
-                I'm a Recruiter
-              </NavbarButton>
+              <RegisterDialog
+                open={isRegisterDialogOpen}
+                onOpenChange={setIsRegisterDialogOpen}
+                onShowLogin={() => setIsLoginDialogOpen(true)}
+                trigger={
+                  <NavbarButton
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      setIsRegisterDialogOpen(true);
+                    }}
+                    variant="primary"
+                    className="w-full bg-primary text-accent rounded-full"
+                  >
+                    Mulai Sekarang!
+                  </NavbarButton>
+                }
+              />
+              <LoginDialog
+                open={isLoginDialogOpen}
+                onOpenChange={setIsLoginDialogOpen}
+              />
             </div>
           </MobileNavMenu>
         </MobileNav>

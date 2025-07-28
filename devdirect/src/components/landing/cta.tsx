@@ -56,20 +56,21 @@ export default function CTA() {
       >
         <div className="px-8 lg:px-12 py-16 text-center">
           <h1 className="text-4xl lg:text-6xl font-bold text-accent-foreground mb-6 leading-tight">
-            Ready to Transform Your Career?
+            Siap Menjadi IT Talent Company Impianmu?
           </h1>
           <p className="text-lg lg:text-xl text-accent-foreground/80 mb-8 max-w-2xl mx-auto">
-            Join thousands of IT Talents who found their dream jobs through
-            DevDirect's AI-powered matching platform.
+            Jadilah bagian dari komunitas IT Talent yang dengan DevDirect.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button
-              size="lg"
-              className="bg-background text-foreground hover:bg-background/90 rounded-full px-8 py-6 text-lg font-semibold"
-            >
-              Get Started for Free
-              <ArrowUpRight className="w-5 h-5 ml-2" />
-            </Button>
+            <Link href="#hero">
+              <Button
+                size="lg"
+                className="bg-background text-foreground hover:bg-background/90 rounded-full px-8 py-6 text-lg font-semibold"
+              >
+                Mulai Sekarang
+                <ArrowUpRight className="w-5 h-5 ml-2" />
+              </Button>
+            </Link>
           </div>
         </div>
 
