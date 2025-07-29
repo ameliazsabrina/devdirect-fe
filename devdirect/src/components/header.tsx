@@ -11,6 +11,7 @@ import {
   MobileNavMenu,
 } from "@/components/ui/resizeable-navbar";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import RegisterDialog from "@/components/auth/registerDialog";
 import LoginDialog from "@/components/auth/loginDialog";
 
@@ -58,6 +59,7 @@ export function Header() {
             <LoginDialog
               open={isLoginDialogOpen}
               onOpenChange={setIsLoginDialogOpen}
+              onShowRegister={() => setIsRegisterDialogOpen(true)}
             />
           </div>
         </NavBody>
@@ -106,6 +108,7 @@ export function Header() {
               <LoginDialog
                 open={isLoginDialogOpen}
                 onOpenChange={setIsLoginDialogOpen}
+                onShowRegister={() => setIsRegisterDialogOpen(true)}
               />
             </div>
           </MobileNavMenu>

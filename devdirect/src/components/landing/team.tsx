@@ -75,7 +75,8 @@ export default function Team() {
               Meet the Team
             </h1>
             <p className="text-lg text-muted-foreground">
-              Experts at Building, Development, and Innovation
+              Bunch of college students who are passionate about building
+              something new.
             </p>
           </div>
         </ScrollReveal>
@@ -100,7 +101,7 @@ export default function Team() {
                 <div className="absolute top-4 right-4 flex gap-2">
                   <a
                     href={member.linkedin}
-                    className="w-8 h-8 bg-accent rounded-full flex items-center justify-center text-accent-foreground hover:bg-accent/80 transition-all duration-300 opacity-90 hover:opacity-100"
+                    className="w-8 h-8 bg-accent rounded-full flex items-center justify-center text-accent-foreground hover:bg-accent/80 transition-all duration-300 opacity-90 hover:opacity-100 hover:scale-110 hover:rotate-12 transform"
                   >
                     <Linkedin className="w-4 h-4" />
                   </a>

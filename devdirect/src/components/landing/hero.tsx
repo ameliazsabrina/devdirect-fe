@@ -15,7 +15,7 @@ export default function Hero() {
         <div className="flex-1 p-8 lg:p-16 flex flex-col justify-between">
           <div className="space-y-8">
             <h1 className="text-4xl lg:text-6xl xl:text-7xl font-bold text-foreground leading-tight animate-slide-in-left-up">
-              Temukan Karier
+              Siapkan Karier
               <br />
               IT Talent Impianmu
             </h1>
