@@ -13,9 +13,30 @@ import {
   Target,
   CheckCircle2,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { Header } from "@/components/header";
-import SpotlightCard from "@/components/spotlight-card";
+import {
+  CVUploadStep,
+  KHSUploadStep,
+  PreviewStep,
+  AnalysisStep,
+  CareerSelectionStep,
+} from "@/components/applicant/onboarding";
+import {
+  sessionAPI,
+  competencyAPI,
+  type ParsedCV,
+  type CVData,
+  type KHSData,
+  type SessionData,
+  type LatestAnalysisData,
+  getStoredAuthToken,
+  testTokenValidity,
+  getTokenInfo,
+} from "@/lib/api";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 const onboardingSteps = [
   {
@@ -56,18 +77,264 @@ const onboardingSteps = [
 ];
 
 export default function OnboardingPage() {
-  const [currentStep, setCurrentStep] = useState(0); // Start at 0 for preparation screen
+  const [currentStep, setCurrentStep] = useState(0);
   const [showPreparation, setShowPreparation] = useState(true);
+  const router = useRouter();
+
+  const [uploadedCVFile, setUploadedCVFile] = useState<File | null>(null);
+  const [parsedCVData, setParsedCVData] = useState<ParsedCV | null>(null);
+  const [completeCVData, setCompleteCVData] = useState<CVData | null>(null);
+  const [uploadedKHSFile, setUploadedKHSFile] = useState<File | null>(null);
+  const [khsData, setKhsData] = useState<KHSData | null>(null);
+  const [consentGiven, setConsentGiven] = useState(false);
+  const [analysisData, setAnalysisData] = useState<LatestAnalysisData | null>(
+    null
+  );
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  // Function to save session data to Redis (gracefully handles missing endpoints)
+  const saveSessionData = async () => {
+    try {
+      const sessionData: SessionData = {
+        cvData: completeCVData,
+        khsData: khsData,
+        uploadedCVFile: uploadedCVFile
+          ? {
+              name: uploadedCVFile.name,
+              size: uploadedCVFile.size,
+              type: uploadedCVFile.type,
+              lastModified: uploadedCVFile.lastModified,
+            }
+          : null,
+        uploadedKHSFile: uploadedKHSFile
+          ? {
+              name: uploadedKHSFile.name,
+              size: uploadedKHSFile.size,
+              type: uploadedKHSFile.type,
+              lastModified: uploadedKHSFile.lastModified,
+            }
+          : null,
+        parsedCVData: parsedCVData,
+        consentGiven: consentGiven,
+        currentStep: currentStep,
+        analysisData: analysisData,
+      };
+
+      const response = await sessionAPI.saveSession(sessionData);
+      if (response.status === "success") {
+        console.log(
+          "✅ Session data saved:",
+          response.message?.includes("local state")
+            ? "Using local state (Redis not available)"
+            : "Saved to Redis"
+        );
+      } else {
+        console.warn("⚠️ Session save warning:", response.message);
+      }
+    } catch (error) {
+      // This shouldn't happen now since sessionAPI handles 404s gracefully
+      console.warn("⚠️ Session save error (continuing without Redis):", error);
+    }
+  };
+
+  // Function to restore session data from Redis
+  const restoreSessionData = async () => {
+    try {
+      const response = await sessionAPI.getSession();
+
+      // Check if this is a "not implemented" response
+      if (
+        response.status === "success" &&
+        response.message?.includes("not implemented")
+      ) {
+        console.log(
+          "Redis session system not yet implemented on backend - using local state only"
+        );
+        // Don't show error to user, this is expected during development
+        return;
+      }
+
+      if (response.status === "success" && response.data) {
+        const sessionData = response.data;
+
+        // Restore state from session
+        if (sessionData.cvData) {
+          setCompleteCVData(sessionData.cvData);
+        }
+        if (sessionData.khsData) {
+          setKhsData(sessionData.khsData);
+        }
+        if (sessionData.parsedCVData) {
+          setParsedCVData(sessionData.parsedCVData);
+        }
+        if (sessionData.consentGiven !== undefined) {
+          setConsentGiven(sessionData.consentGiven);
+        }
+        if (sessionData.analysisData) {
+          setAnalysisData(sessionData.analysisData);
+        }
+        if (sessionData.currentStep && sessionData.currentStep > 0) {
+          setCurrentStep(sessionData.currentStep);
+          setShowPreparation(false);
+        }
+
+        // Note: File objects cannot be serialized, so we can't restore actual File objects
+        // We can only show that files were previously uploaded
+        if (sessionData.uploadedCVFile) {
+          console.log(
+            "CV file was previously uploaded:",
+            sessionData.uploadedCVFile.name
+          );
+          toast.info("Session Restored", {
+            description: `Previous CV file: ${sessionData.uploadedCVFile.name}`,
+          });
+        }
+        if (sessionData.uploadedKHSFile) {
+          console.log(
+            "KHS file was previously uploaded:",
+            sessionData.uploadedKHSFile.name
+          );
+          toast.info("Session Restored", {
+            description: `Previous KHS file: ${sessionData.uploadedKHSFile.name}`,
+          });
+        }
+
+        console.log("Session data restored successfully");
+      } else {
+        console.log(
+          "No session data found, session expired, or Redis endpoints not implemented yet"
+        );
+      }
+    } catch (error) {
+      console.error("Error restoring session data:", error);
+    }
+  };
+
+  React.useEffect(() => {
+    const validateTokenOnLoad = async () => {
+      console.log("Validating token on page load...");
+      const isValid = await testTokenValidity();
+
+      if (!isValid) {
+        console.log("Token validation failed on page load");
+        toast.error("Authentication Required", {
+          description: "Please login to access this page.",
+        });
+        router.push("/");
+      } else {
+        console.log("Token validation successful on page load");
+
+        // Restore session data after successful token validation
+        await restoreSessionData();
+      }
+    };
+
+    validateTokenOnLoad();
+  }, [router]);
+
+  // Auto-save session data whenever important state changes
+  React.useEffect(() => {
+    // Only save if we have valid data and user is authenticated
+    if (
+      getStoredAuthToken() &&
+      (completeCVData || khsData || parsedCVData || currentStep > 0)
+    ) {
+      const debounceTimer = setTimeout(() => {
+        saveSessionData();
+      }, 1000); // Debounce saves to avoid too frequent API calls
+
+      return () => clearTimeout(debounceTimer);
+    }
+  }, [
+    completeCVData,
+    khsData,
+    parsedCVData,
+    consentGiven,
+    currentStep,
+    uploadedCVFile,
+    uploadedKHSFile,
+    analysisData,
+  ]);
+
   const progress = showPreparation
     ? 0
     : (currentStep / onboardingSteps.length) * 100;
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (showPreparation) {
       setShowPreparation(false);
       setCurrentStep(1);
     } else if (currentStep < onboardingSteps.length) {
-      setCurrentStep(currentStep + 1);
+      // Check if moving from Preview (step 3) to Analysis (step 4)
+      if (currentStep === 3) {
+        setIsAnalyzing(true);
+        toast.info("Analyzing your skills...", {
+          description: "This may take a few moments. Please wait.",
+        });
+
+        try {
+          // Trigger competency analysis
+          const analysisResponse = await competencyAPI.analyzeSkills();
+
+          if (analysisResponse.status === "success") {
+            // Get the latest analysis data
+            const latestResponse = await competencyAPI.getLatestAnalysis();
+
+            if (latestResponse.status === "success" && latestResponse.data) {
+              setAnalysisData(latestResponse.data);
+              toast.success("Analysis completed!", {
+                description: "Your skill analysis is ready to review.",
+              });
+              setCurrentStep(currentStep + 1);
+            } else {
+              toast.error("Failed to retrieve analysis", {
+                description:
+                  latestResponse.message || "Could not load analysis results.",
+              });
+            }
+          } else {
+            // Handle analysis failure
+            if (analysisResponse.message?.includes("Authentication expired")) {
+              toast.error("Session expired", {
+                description: "Please login again to continue.",
+              });
+              router.push("/");
+              return;
+            }
+
+            toast.error("Analysis failed", {
+              description:
+                analysisResponse.message ||
+                "Could not analyze your skills. Please try again.",
+            });
+          }
+        } catch (error) {
+          console.error("Error during skill analysis:", error);
+          toast.error("Analysis error", {
+            description: "An unexpected error occurred during analysis.",
+          });
+        } finally {
+          setIsAnalyzing(false);
+        }
+      } else {
+        // Normal step progression
+        setCurrentStep(currentStep + 1);
+      }
+    } else {
+      // Onboarding completed, clear session data
+      try {
+        await sessionAPI.clearSession();
+        console.log("Onboarding completed, session data cleared");
+        toast.success("Onboarding completed!", {
+          description: "Redirecting to dashboard...",
+        });
+        // Redirect to dashboard or next page
+        router.push("/dashboard");
+      } catch (error) {
+        console.error("Error clearing session on completion:", error);
+        // Still redirect even if clearing fails
+        router.push("/dashboard");
+      }
     }
   };
 
@@ -94,21 +361,56 @@ export default function OnboardingPage() {
   const getCurrentStepComponent = () => {
     switch (currentStep) {
       case 1:
-        return <CVUploadStep />;
+        return (
+          <CVUploadStep
+            uploadedFile={uploadedCVFile}
+            setUploadedFile={setUploadedCVFile}
+            parsedCV={parsedCVData}
+            setParsedCV={setParsedCVData}
+            cvData={completeCVData}
+            setCVData={setCompleteCVData}
+          />
+        );
       case 2:
-        return <KHSUploadStep />;
+        return (
+          <KHSUploadStep
+            uploadedFile={uploadedKHSFile}
+            setUploadedFile={setUploadedKHSFile}
+            khsData={khsData}
+            setKhsData={setKhsData}
+          />
+        );
       case 3:
-        return <PreviewStep />;
+        return (
+          <PreviewStep
+            cvData={completeCVData}
+            parsedCV={parsedCVData}
+            khsData={khsData}
+            setCVData={setCompleteCVData}
+            consentGiven={consentGiven}
+            setConsentGiven={setConsentGiven}
+          />
+        );
       case 4:
-        return <AnalysisStep />;
+        return (
+          <AnalysisStep analysisData={analysisData} isAnalyzing={isAnalyzing} />
+        );
       case 5:
-        return <CareerSelectionStep />;
+        return <CareerSelectionStep analysisData={analysisData} />;
       default:
-        return <CVUploadStep />;
+        return (
+          <CVUploadStep
+            uploadedFile={uploadedCVFile}
+            setUploadedFile={setUploadedCVFile}
+            parsedCV={parsedCVData}
+            setParsedCV={setParsedCVData}
+            cvData={completeCVData}
+            setCVData={setCompleteCVData}
+          />
+        );
     }
   };
 
-  // Show preparation screen first
   if (showPreparation) {
     return (
       <div className="min-h-screen bg-background">
@@ -121,6 +423,169 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+
+      <div className="bg-yellow-50 border-b border-yellow-200 p-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-yellow-800">
+                Debug Info - Authentication & Session Status
+              </h3>
+              <p className="text-xs text-yellow-600">
+                Token validation, API authentication, and Redis session
+                debugging. Note: Redis session endpoints may not be implemented
+                yet on backend.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={async () => {
+                  const token = getStoredAuthToken();
+                  console.log("=== TOKEN DEBUG INFO ===");
+                  console.log("Current stored token:", {
+                    exists: !!token,
+                    length: token?.length,
+                    preview: token
+                      ? token.substring(0, 50) + "..."
+                      : "No token",
+                    fullToken: token,
+                  });
+
+                  if (token) {
+                    const tokenInfo = getTokenInfo(token);
+                    if (tokenInfo) {
+                      const isExpired = tokenInfo.exp * 1000 < Date.now();
+                      console.log("Token validation result:", {
+                        expiresAt: new Date(
+                          tokenInfo.exp * 1000
+                        ).toLocaleString(),
+                        timeLeft: tokenInfo.timeLeft,
+                        isExpired: isExpired,
+                        currentTime: new Date().toLocaleString(),
+                      });
+
+                      toast.info("Token Status", {
+                        description: `${
+                          isExpired ? "EXPIRED" : "VALID"
+                        } - Expires: ${new Date(
+                          tokenInfo.exp * 1000
+                        ).toLocaleString()} (${tokenInfo.timeLeft} left)`,
+                      });
+                    } else {
+                      console.log("Invalid token format");
+                      toast.error("Invalid token format", {
+                        description: "Token appears to be corrupted",
+                      });
+                    }
+                  } else {
+                    console.log("No token found in localStorage");
+                    toast.error("No token found", {
+                      description: "Please login again",
+                    });
+                  }
+                }}
+              >
+                Check Token
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={async () => {
+                  console.log("=== API VALIDATION TEST ===");
+                  const isValid = await testTokenValidity();
+                  console.log("API validation result:", isValid);
+
+                  if (isValid) {
+                    toast.success("API Token is valid", {
+                      description:
+                        "Authentication working properly with backend",
+                    });
+                  } else {
+                    toast.error("API Token is invalid", {
+                      description: "Backend rejected the authentication token",
+                    });
+                  }
+                }}
+              >
+                Test API Auth
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  // Clear all tokens manually for testing
+                  if (typeof window !== "undefined") {
+                    localStorage.removeItem("authToken");
+                    localStorage.removeItem("auth_token");
+                  }
+                  window.dispatchEvent(new Event("authStateChanged"));
+                  toast.success("Tokens cleared", {
+                    description: "All authentication tokens have been removed",
+                  });
+                }}
+              >
+                Clear All Tokens
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={async () => {
+                  console.log("=== SESSION DEBUG INFO ===");
+                  console.log("Current session state:", {
+                    cvData: !!completeCVData,
+                    khsData: !!khsData,
+                    parsedCV: !!parsedCVData,
+                    uploadedCVFile: !!uploadedCVFile,
+                    uploadedKHSFile: !!uploadedKHSFile,
+                    consentGiven,
+                    currentStep,
+                  });
+
+                  try {
+                    const response = await sessionAPI.getSession();
+                    console.log("Redis session data:", response);
+                    toast.info("Session Status", {
+                      description:
+                        response.status === "success"
+                          ? "Session data found in Redis"
+                          : "No session data in Redis",
+                    });
+                  } catch (error) {
+                    console.error("Session check error:", error);
+                    toast.error("Session check failed", {
+                      description: "Could not retrieve session data",
+                    });
+                  }
+                }}
+              >
+                Check Session
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={async () => {
+                  try {
+                    await sessionAPI.clearSession();
+                    toast.success("Session cleared", {
+                      description: "All session data removed from Redis",
+                    });
+                    console.log("Manual session clear completed");
+                  } catch (error) {
+                    console.error("Manual session clear error:", error);
+                    toast.error("Session clear failed", {
+                      description: "Could not clear session data",
+                    });
+                  }
+                }}
+              >
+                Clear Session
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="border-b bg-card/50 backdrop-blur">
         <div className="max-w-4xl mx-auto px-6 py-4">
@@ -205,9 +670,6 @@ export default function OnboardingPage() {
         <Card className="min-h-[500px]">
           <CardHeader>
             <CardTitle className="flex items-center gap-3">
-              {React.createElement(onboardingSteps[currentStep - 1].icon, {
-                className: "w-6 h-6 text-accent",
-              })}
               {onboardingSteps[currentStep - 1].title}
             </CardTitle>
             <p className="text-muted-foreground">
@@ -229,18 +691,38 @@ export default function OnboardingPage() {
             Sebelumnya
           </Button>
 
-          <div className="flex gap-2">
-            <Button variant="outline">Simpan Draft</Button>
-            <Button
-              onClick={handleNext}
-              disabled={currentStep === onboardingSteps.length}
-              className="flex items-center gap-2"
-            >
-              {currentStep === onboardingSteps.length
-                ? "Selesai"
-                : "Selanjutnya"}
-              <ArrowRight className="w-4 h-4" />
-            </Button>
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex gap-2">
+              <Button variant="outline">Simpan Draft</Button>
+              <Button
+                onClick={handleNext}
+                disabled={
+                  currentStep === onboardingSteps.length ||
+                  (currentStep === 3 && !consentGiven) ||
+                  isAnalyzing
+                }
+                className="flex items-center gap-2"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Menganalisis...
+                  </>
+                ) : (
+                  <>
+                    {currentStep === onboardingSteps.length
+                      ? "Selesai"
+                      : "Selanjutnya"}
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </Button>
+            </div>
+            {currentStep === 3 && !consentGiven && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Berikan persetujuan untuk melanjutkan ke tahap berikutnya
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -280,7 +762,7 @@ function PreparationScreen({
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <FileText className="w-6 h-6 text-primary" />
+                    <FileText className="w-6 h-6" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-foreground">
@@ -295,7 +777,9 @@ function PreparationScreen({
                 <div className="bg-muted/50 p-4 rounded-lg space-y-2">
                   <div className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Format: PDF</span>
+                    <span className="text-sm">
+                      Format: PDF (disarankan dengan format ATS)
+                    </span>
                   </div>
                   <div className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
@@ -314,7 +798,7 @@ function PreparationScreen({
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center">
-                    <Upload className="w-6 h-6 text-blue-600" />
+                    <Upload className="w-6 h-6" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-foreground">
@@ -358,7 +842,7 @@ function PreparationScreen({
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              {onboardingSteps.map((step, index) => {
+              {onboardingSteps.map((step) => {
                 const Icon = step.icon;
                 return (
                   <div key={step.id} className="text-center">
@@ -418,260 +902,3 @@ function PreparationScreen({
   );
 }
 
-// Placeholder components for each step
-function CVUploadStep() {
-  return (
-    <div className="space-y-6">
-      <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-accent/50 transition-colors">
-        <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-foreground mb-2">
-          Upload CV Anda
-        </h3>
-        <p className="text-muted-foreground mb-4">
-          Drag & drop file CV atau klik untuk browse
-        </p>
-        <Button>
-          <Upload className="w-4 h-4 mr-2" />
-          Pilih File CV
-        </Button>
-        <p className="text-xs text-muted-foreground mt-2">
-          Mendukung format PDF (Max 5MB)
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function KHSUploadStep() {
-  return (
-    <div className="space-y-6">
-      <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-accent/50 transition-colors">
-        <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-foreground mb-2">
-          Upload KHS
-        </h3>
-        <p className="text-muted-foreground mb-4">
-          Kartu Hasil Studi untuk analisis akademik yang lebih akurat
-        </p>
-        <Button variant="outline">
-          <FileText className="w-4 h-4 mr-2" />
-          Pilih File KHS
-        </Button>
-        <div className="mt-4">
-          <Button variant="ghost">Lewati langkah ini</Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function PreviewStep() {
-  return (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <Eye className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-foreground mb-2">
-          Preview Data
-        </h3>
-        <p className="text-muted-foreground">
-          Periksa informasi yang berhasil diekstrak dari CV Anda
-        </p>
-      </div>
-
-      <div className="space-y-4">
-        <Card>
-          <CardContent className="p-4">
-            <h4 className="font-medium text-foreground mb-2">
-              Informasi Pribadi
-            </h4>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-muted-foreground">Nama:</span>
-                <span className="ml-2 text-foreground">John Doe</span>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Email:</span>
-                <span className="ml-2 text-foreground">john@example.com</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <h4 className="font-medium text-foreground mb-2">Skills</h4>
-            <div className="flex flex-wrap gap-2">
-              {["JavaScript", "React", "Node.js", "Python"].map((skill) => (
-                <span
-                  key={skill}
-                  className="px-3 py-1 bg-accent/20 text-accent-foreground rounded-full text-sm"
-                >
-                  {skill}
-                </span>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
-
-function AnalysisStep() {
-  return (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-foreground mb-2">
-          AI Analysis
-        </h3>
-        <p className="text-muted-foreground">
-          Analisis mendalam terhadap skill dan potensi karier Anda
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <h4 className="font-medium text-foreground mb-3">Skill Analysis</h4>
-            <div className="space-y-3">
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>Frontend Development</span>
-                  <span>85%</span>
-                </div>
-                <Progress value={85} className="h-2" />
-              </div>
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>Backend Development</span>
-                  <span>70%</span>
-                </div>
-                <Progress value={70} className="h-2" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <h4 className="font-medium text-foreground mb-3">
-              Rekomendasi Karier
-            </h4>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm">Full Stack Developer</span>
-                <span className="text-xs text-accent bg-primary px-2 py-1 rounded-full">
-                  90% match
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">Frontend Developer</span>
-                <span className="text-xs bg-primary text-accent px-2 py-1 rounded-full">
-                  85% match
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
-
-function CareerSelectionStep() {
-  const careers = [
-    {
-      title: "Full Stack Developer",
-      match: "90%",
-      desc: "Menguasai frontend dan backend",
-      isTop: true,
-    },
-    {
-      title: "Frontend Developer",
-      match: "85%",
-      desc: "Spesialis antarmuka pengguna",
-      isTop: false,
-    },
-    {
-      title: "Backend Developer",
-      match: "75%",
-      desc: "Fokus pada server dan database",
-      isTop: false,
-    },
-  ];
-
-  return (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-foreground mb-2">
-          Pilih Fokus Karier
-        </h3>
-        <p className="text-muted-foreground">
-          Pilih jalur karier yang paling sesuai dengan minat dan skill Anda
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {careers.map((career) => {
-          if (career.isTop) {
-            return (
-              <SpotlightCard
-                key={career.title}
-                className="cursor-pointer transition-all duration-200  border-border hover:border-accent col-span-full bg-card"
-                spotlightColor="rgba(217, 254, 133, 0.50)"
-              >
-                <div className="relative">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-lg font-semibold text-foreground">
-                        {career.title}
-                      </h4>
-                      <span className="text-xs bg-accent text-accent-foreground px-3 py-1 rounded-full font-medium">
-                        🎯 Best Match
-                      </span>
-                    </div>
-                    <span className="text-lg font-bold text-accent text-primary">
-                      {career.match}
-                    </span>
-                  </div>
-                  <p className="text-muted-foreground mb-4">{career.desc}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-primary">
-                      Recommended for you
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 bg-primary rounded-full"></div>
-                      <div className="w-2 h-2 bg-primary rounded-full"></div>
-                      <div className="w-2 h-2 bg-accent/30 rounded-full"></div>
-                    </div>
-                  </div>
-                </div>
-              </SpotlightCard>
-            );
-          }
-
-          return (
-            <Card
-              key={career.title}
-              className="cursor-pointer hover:shadow-md transition-shadow border-2 hover:border-accent"
-            >
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-medium text-foreground">
-                    {career.title}
-                  </h4>
-                  <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">
-                    {career.match}
-                  </span>
-                </div>
-                <p className="text-sm text-muted-foreground">{career.desc}</p>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-    </div>
-  );
-}

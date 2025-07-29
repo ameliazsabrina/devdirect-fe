@@ -18,7 +18,10 @@ export default function CTA() {
     const container = containerRef.current;
     if (!container) return;
 
-    gsap.fromTo(
+    // Store component-specific trigger for proper cleanup
+    let componentTrigger: ScrollTrigger | null = null;
+
+    const animation = gsap.fromTo(
       container,
       {
         scale: 0.8,
@@ -39,8 +42,13 @@ export default function CTA() {
       }
     );
 
+    componentTrigger = animation.scrollTrigger;
+
     return () => {
-      ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+      // Only kill trigger created by this component
+      if (componentTrigger) {
+        componentTrigger.kill();
+      }
     };
   }, []);
 

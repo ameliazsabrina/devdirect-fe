@@ -13,10 +13,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Loader2, Mail, Lock, LogIn } from "lucide-react";
-import { authAPI, type LoginRequest } from "@/lib/api";
+import { Loader2, Mail, Lock } from "lucide-react";
+import {
+  authAPI,
+  type LoginRequest,
+  removeAuthToken,
+  clearAuthTokens,
+  setAuthToken,
+} from "@/lib/api";
 import { toast } from "sonner";
 import { signInWithGoogle } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext.minimal";
 
 interface ApplicantLoginDialogProps {
   trigger?: React.ReactNode;
@@ -39,6 +46,45 @@ export default function ApplicantLoginDialog({
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const router = useRouter();
+  const { setCustomAuth } = useAuth();
+
+  // Check and clear only invalid/expired tokens when dialog opens
+  React.useEffect(() => {
+    if (open) {
+      // Only clear tokens if they are invalid or expired
+      if (typeof window !== "undefined") {
+        const existingToken =
+          localStorage.getItem("authToken") ||
+          localStorage.getItem("auth_token");
+
+        if (existingToken) {
+          console.log("Checking existing token validity on login dialog open");
+
+          // Check if token is expired
+          try {
+            const payload = JSON.parse(atob(existingToken.split(".")[1]));
+            const isExpired = payload.exp * 1000 < Date.now();
+
+            if (isExpired) {
+              console.log("Token is expired, clearing on login dialog open");
+              clearAuthTokens();
+              window.dispatchEvent(new Event("authStateChanged"));
+            } else {
+              console.log(
+                "Token is still valid, user should not need to login"
+              );
+
+              onOpenChange?.(false);
+            }
+          } catch (error) {
+            console.log("Invalid token format, clearing on login dialog open");
+            clearAuthTokens();
+            window.dispatchEvent(new Event("authStateChanged"));
+          }
+        }
+      }
+    }
+  }, [open, onOpenChange]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -71,9 +117,18 @@ export default function ApplicantLoginDialog({
     });
 
     try {
+      // Log the exact request data being sent
+      console.log("Login request data:", {
+        email: formData.email,
+        password: formData.password,
+        requestBody: JSON.stringify(formData),
+      });
+
       const response = await authAPI.login(formData);
 
       console.log("Login API Response:", response);
+      console.log("Response status:", response.status);
+      console.log("Response data:", response.data);
 
       if (response.status === "success") {
         toast.success("Login berhasil!", {
@@ -81,7 +136,23 @@ export default function ApplicantLoginDialog({
         });
 
         if (response.data?.token) {
-          localStorage.setItem("auth_token", response.data.token);
+          // Use the standardized token storage function
+          setAuthToken(response.data.token);
+          console.log("Token saved using standardized method");
+
+          // Notify auth context about successful backend login
+          setCustomAuth(response.data.token, {
+            id: "backend-user",
+            email: formData.email,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            aud: "authenticated",
+            app_metadata: {},
+            user_metadata: { role: "applicant" },
+          });
+
+          // Dispatch auth state change event
+          window.dispatchEvent(new Event("authStateChanged"));
         }
 
         onOpenChange?.(false);
@@ -93,9 +164,24 @@ export default function ApplicantLoginDialog({
 
         router.push("/onboarding");
       } else {
-        if (response.message?.includes("Invalid credentials")) {
-          toast.error("Kredensial tidak valid", {
-            description: "Email atau password yang Anda masukkan salah.",
+        console.log("Login failed with response:", response);
+
+        // Handle specific error cases
+        if (
+          response.message?.includes("Invalid credentials") ||
+          response.message?.includes("invalid")
+        ) {
+          toast.error("Email atau password salah", {
+            description:
+              "Periksa kembali email dan password Anda, atau daftar jika belum memiliki akun.",
+          });
+        } else if (
+          response.message?.includes("not found") ||
+          response.message?.includes("does not exist")
+        ) {
+          toast.error("Akun tidak ditemukan", {
+            description:
+              "Email tidak terdaftar. Silakan daftar terlebih dahulu.",
           });
         } else {
           toast.error("Login gagal", {
@@ -105,6 +191,11 @@ export default function ApplicantLoginDialog({
       }
     } catch (error) {
       console.error("Login Network Error:", error);
+      console.error("Error details:", {
+        message: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : "No stack trace",
+      });
+
       toast.error("Terjadi kesalahan", {
         description: "Tidak dapat terhubung ke server. Coba lagi nanti.",
       });

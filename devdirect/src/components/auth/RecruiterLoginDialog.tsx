@@ -14,8 +14,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Loader2, Mail, Lock, Building2 } from "lucide-react";
-import { authAPI, type LoginRequest } from "@/lib/api";
+import { authAPI, type LoginRequest, setAuthToken } from "@/lib/api";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext.minimal";
 
 interface RecruiterLoginDialogProps {
   trigger?: React.ReactNode;
@@ -37,6 +38,7 @@ export default function RecruiterLoginDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const router = useRouter();
+  const { setCustomAuth } = useAuth();
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -80,7 +82,18 @@ export default function RecruiterLoginDialog({
 
         // Store token if provided
         if (response.data?.token) {
-          localStorage.setItem("auth_token", response.data.token);
+          setAuthToken(response.data.token);
+
+          // Notify auth context about successful backend login
+          setCustomAuth(response.data.token, {
+            id: "backend-user",
+            email: formData.email,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            aud: "authenticated",
+            app_metadata: {},
+            user_metadata: { role: "recruiter" },
+          });
         }
 
         onOpenChange?.(false);

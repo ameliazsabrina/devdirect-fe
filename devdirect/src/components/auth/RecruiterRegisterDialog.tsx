@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Loader2, User, Mail, Lock, Building2 } from "lucide-react";
-import { authAPI, type RegisterRequest } from "@/lib/api";
+import { authAPI, type RegisterRequest, setAuthToken } from "@/lib/api";
 import { toast } from "sonner";
 
 interface RecruiterRegisterDialogProps {
@@ -91,7 +91,7 @@ export default function RecruiterRegisterDialog({
 
         // Store token if provided
         if (response.data?.token) {
-          localStorage.setItem("auth_token", response.data.token);
+          setAuthToken(response.data.token);
         }
 
         onOpenChange?.(false);

@@ -12,8 +12,8 @@ export default function Hero() {
     <div className="min-h-screen relative overflow-hidden" id="hero">
       <Header />
       <div className="relative z-10 min-h-screen flex">
-        <div className="flex-1 p-8 lg:p-16 flex flex-col justify-between">
-          <div className="space-y-8">
+        <div className="md:flex-1 p-8 lg:p-16 md:flex md:flex-col md:justify-between">
+          <div className="space-y-8 ">
             <h1 className="text-4xl lg:text-6xl xl:text-7xl font-bold text-foreground leading-tight animate-slide-in-left-up">
               Siapkan Karier
               <br />
@@ -23,32 +23,33 @@ export default function Hero() {
             {/* Statistics from left */}
             <div className="space-y-4 animate-slide-in-left animation-delay-200">
               <div className="flex items-center space-x-2">
-                <div className="flex items-center space-x-2  p-4 bg-accent rounded-full">
+                <div className="flex items-center space-x-2 p-4 bg-accent rounded-full">
                   <span className="text-3xl lg:text-4xl font-bold text-secondary-foreground">
-                    500+
+                    Rp0
                   </span>
                   <span className="text-sm lg:text-base text-muted-foreground">
-                    IT Talent Terkoneksi
+                    Biaya Untuk Akses Awal Pengguna Pertama
                   </span>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <div className="flex items-center space-x-2  p-4 bg-accent rounded-full">
+                <div className="flex items-center space-x-2 p-4 bg-accent rounded-full">
                   <span className="text-3xl lg:text-4xl font-bold text-secondary-foreground">
-                    300+
+                    100%
                   </span>
                   <span className="text-sm lg:text-base text-muted-foreground">
-                    Perusahaan Membuka Lowongan
+                    Pencocokan Talenta dengan AI
                   </span>
                 </div>
               </div>
+
               <div className="flex items-center space-x-2">
-                <div className="flex items-center space-x-2  p-4 bg-accent rounded-full">
+                <div className="flex items-center space-x-2 p-4 bg-accent rounded-full">
                   <span className="text-3xl lg:text-4xl font-bold text-secondary-foreground">
-                    24/7
+                    🚀
                   </span>
                   <span className="text-sm lg:text-base text-muted-foreground">
-                    Pencocokan Berbasis AI
+                    Jadi Early User sekarang!
                   </span>
                 </div>
               </div>
@@ -78,7 +79,7 @@ export default function Hero() {
             {/* Description p from right up */}
             <p className="text-lg lg:text-xl text-muted-foreground leading-relaxed animate-slide-in-right-up animation-delay-300">
               Cari kerja di dunia tech atau butuh talenta digital? DevDirect
-              bantu kamu dapet match terbaik!
+              bantu kamu dapet match terbaik
               <br />
               <span className="font-semibold">Simple, cepat, tepat.</span>
             </p>

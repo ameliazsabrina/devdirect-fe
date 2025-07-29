@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Loader2, User, Mail, Lock } from "lucide-react";
-import { authAPI, type RegisterRequest } from "@/lib/api";
+import { authAPI, type RegisterRequest, setAuthToken } from "@/lib/api";
 import { toast } from "sonner";
 import { signInWithGoogle } from "@/lib/supabase";
 
@@ -35,7 +35,7 @@ export default function ApplicantRegisterDialog({
     password: "",
     confirmPassword: "",
     name: "",
-    role: "applicant", // Fixed role for applicants
+    role: "applicant",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -93,7 +93,7 @@ export default function ApplicantRegisterDialog({
 
         // Store token if provided
         if (response.data?.token) {
-          localStorage.setItem("auth_token", response.data.token);
+          setAuthToken(response.data.token);
         }
 
         onOpenChange?.(false);

@@ -109,9 +109,12 @@ export default function Webflow() {
     const section = sectionRef.current;
     if (!section) return;
 
+    // Store component-specific triggers for proper cleanup
+    const triggers: ScrollTrigger[] = [];
+
     const cards = section.querySelectorAll("[data-card]");
     cards.forEach((card, index) => {
-      gsap.fromTo(
+      const animation = gsap.fromTo(
         card,
         {
           opacity: 0,
@@ -133,10 +136,15 @@ export default function Webflow() {
           delay: index * 0.1,
         }
       );
+
+      if (animation.scrollTrigger) {
+        triggers.push(animation.scrollTrigger);
+      }
     });
 
     return () => {
-      ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+      // Only kill triggers created by this component
+      triggers.forEach((trigger) => trigger.kill());
     };
   }, []);
 

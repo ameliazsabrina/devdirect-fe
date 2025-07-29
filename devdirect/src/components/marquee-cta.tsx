@@ -32,6 +32,9 @@ export default function MarqueeCTA() {
     gsap.set(firstRows.concat(thirdRow), { x: 0 });
     gsap.set(secondRow, { x: 0 });
 
+    // Store component-specific timeline for proper cleanup
+    let componentTimeline: gsap.core.Timeline | null = null;
+
     const createScrollTrigger = () => {
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -56,13 +59,18 @@ export default function MarqueeCTA() {
         "<"
       );
 
+      componentTimeline = tl;
       return tl;
     };
 
     createScrollTrigger();
 
     return () => {
-      ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+      // Only kill the timeline created by this component
+      if (componentTimeline && componentTimeline.scrollTrigger) {
+        componentTimeline.scrollTrigger.kill();
+        componentTimeline.kill();
+      }
     };
   }, []);
 

@@ -36,9 +36,8 @@ const ScrollReveal: React.FC<ScrollRevealProps> = ({
     }
 
     return () => {
-      if (ref.current) {
-        observer.unobserve(ref.current);
-      }
+      // Properly disconnect the observer to free up resources
+      observer.disconnect();
     };
   }, [delay]);
 
