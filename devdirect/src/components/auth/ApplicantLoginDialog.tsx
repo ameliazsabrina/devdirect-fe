@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -12,43 +13,35 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Loader2, User, Mail, Lock, UserCheck } from "lucide-react";
-import { authAPI, type RegisterRequest } from "@/lib/api";
+import { Loader2, Mail, Lock, LogIn } from "lucide-react";
+import { authAPI, type LoginRequest } from "@/lib/api";
 import { toast } from "sonner";
 import { signInWithGoogle } from "@/lib/supabase";
-import LoginDialog from "./loginDialog";
 
-interface RegisterDialogProps {
+interface ApplicantLoginDialogProps {
   trigger?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  onShowLogin?: () => void;
+  onShowRegister?: () => void;
 }
 
-export default function RegisterDialog({
+export default function ApplicantLoginDialog({
   trigger,
   open,
   onOpenChange,
-  onShowLogin,
-}: RegisterDialogProps) {
-  const [formData, setFormData] = useState<RegisterRequest>({
+  onShowRegister,
+}: ApplicantLoginDialogProps) {
+  const [formData, setFormData] = useState<LoginRequest>({
     email: "",
     password: "",
-    confirmPassword: "",
-    name: "",
-    role: "applicant",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const router = useRouter();
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = "Nama lengkap wajib diisi";
-    }
 
     if (!formData.email.trim()) {
       newErrors.email = "Email wajib diisi";
@@ -58,14 +51,6 @@ export default function RegisterDialog({
 
     if (!formData.password) {
       newErrors.password = "Password wajib diisi";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password minimal 6 karakter";
-    }
-
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "Konfirmasi password wajib diisi";
-    } else if (formData.confirmPassword !== formData.password) {
-      newErrors.confirmPassword = "Password tidak cocok";
     }
 
     setErrors(newErrors);
@@ -81,23 +66,20 @@ export default function RegisterDialog({
 
     setIsLoading(true);
 
-    // Test toast to make sure it's working
-    toast.info("Mencoba mendaftar...", {
-      description: "Mengirim data ke server.",
+    toast.info("Mencoba login sebagai IT Talent...", {
+      description: "Memverifikasi kredensial Anda.",
     });
 
     try {
-      const response = await authAPI.register(formData);
+      const response = await authAPI.login(formData);
 
-      console.log("API Response:", response); // Debug log
+      console.log("Login API Response:", response);
 
       if (response.status === "success") {
-        toast.success("Registrasi berhasil!", {
-          description:
-            "Akun Anda telah berhasil dibuat. Selamat datang di DevDirect!",
+        toast.success("Login berhasil!", {
+          description: "Selamat datang kembali, IT Talent!",
         });
 
-        // Store token if provided
         if (response.data?.token) {
           localStorage.setItem("auth_token", response.data.token);
         }
@@ -106,37 +88,23 @@ export default function RegisterDialog({
         setFormData({
           email: "",
           password: "",
-          confirmPassword: "",
-          name: "",
-          role: "applicant",
         });
         setErrors({});
 
-        // Show login dialog after successful registration
-        setTimeout(() => {
-          onShowLogin?.();
-        }, 500);
+        router.push("/onboarding");
       } else {
-        // Handle API errors
-        console.log("API Error:", response); // Debug log
-        if (response.message?.includes("already exists")) {
-          toast.error("Email sudah terdaftar", {
-            description:
-              "Gunakan email lain atau coba login dengan akun yang sudah ada.",
-          });
-        } else if (response.message?.includes("validation")) {
-          toast.error("Data tidak valid", {
-            description: "Periksa kembali data yang Anda masukkan.",
+        if (response.message?.includes("Invalid credentials")) {
+          toast.error("Kredensial tidak valid", {
+            description: "Email atau password yang Anda masukkan salah.",
           });
         } else {
-          toast.error("Registrasi gagal", {
-            description:
-              response.message || "Terjadi kesalahan saat membuat akun.",
+          toast.error("Login gagal", {
+            description: response.message || "Terjadi kesalahan saat login.",
           });
         }
       }
     } catch (error) {
-      console.error("Network Error:", error); // Debug log
+      console.error("Login Network Error:", error);
       toast.error("Terjadi kesalahan", {
         description: "Tidak dapat terhubung ke server. Coba lagi nanti.",
       });
@@ -145,15 +113,15 @@ export default function RegisterDialog({
     }
   };
 
-  const handleInputChange = (field: keyof RegisterRequest, value: string) => {
+  const handleInputChange = (field: keyof LoginRequest, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
+
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
-  const handleGoogleSignUp = async () => {
+  const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
 
     try {
@@ -161,18 +129,17 @@ export default function RegisterDialog({
         description: "Anda akan diarahkan ke halaman login Google.",
       });
 
-      const { data, error } = await signInWithGoogle();
+      const { error } = await signInWithGoogle();
 
       if (error) {
-        console.error("Google sign up error:", error);
+        console.error("Google sign in error:", error);
         toast.error("Gagal terhubung dengan Google", {
           description:
             "Terjadi kesalahan saat menghubungkan dengan Google. Coba lagi.",
         });
       }
-      // Note: Success will be handled by the auth callback
     } catch (error) {
-      console.error("Google sign up failed:", error);
+      console.error("Google sign in failed:", error);
       toast.error("Terjadi kesalahan", {
         description: "Tidak dapat terhubung dengan Google. Coba lagi nanti.",
       });
@@ -183,27 +150,29 @@ export default function RegisterDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
+      {trigger && (
+        <DialogTrigger asChild>
+          <div data-dialog="applicant-login">{trigger}</div>
+        </DialogTrigger>
+      )}
 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-center text-2xl font-bold">
-            Daftar ke DevDirect
+          <DialogTitle className="text-center text-2xl font-bold flex items-center justify-center gap-2">
+            Login IT Talent
           </DialogTitle>
           <DialogDescription className="text-center text-muted-foreground">
-            Bergabunglah dengan platform AI untuk menghubungkan talent dengan
-            peluang karier terbaik
+            Masuk ke akun IT Talent Anda untuk melanjutkan perjalanan karier
           </DialogDescription>
         </DialogHeader>
 
-        {/* Google OAuth Button */}
         <div className="space-y-4">
           <Button
             type="button"
             variant="outline"
-            onClick={handleGoogleSignUp}
+            onClick={handleGoogleSignIn}
             disabled={isLoading || isGoogleLoading}
-            className="w-full flex items-center "
+            className="w-full flex items-center gap-3 py-6"
           >
             {isGoogleLoading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -227,7 +196,7 @@ export default function RegisterDialog({
                 />
               </svg>
             )}
-            {isGoogleLoading ? "Menghubungkan..." : "Daftar dengan Google"}
+            {isGoogleLoading ? "Menghubungkan..." : "Masuk dengan Google"}
           </Button>
 
           <div className="relative">
@@ -236,36 +205,14 @@ export default function RegisterDialog({
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-background px-2 text-muted-foreground">
-                Atau daftar dengan email
+                Atau masuk dengan email
               </span>
             </div>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name" className="text-sm font-medium">
-              Nama Lengkap
-            </Label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                id="name"
-                type="text"
-                placeholder="Masukkan nama lengkap"
-                value={formData.name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  handleInputChange("name", e.target.value)
-                }
-                className={`pl-10 ${errors.name ? "border-destructive" : ""}`}
-                disabled={isLoading}
-              />
-            </div>
-            {errors.name && (
-              <p className="text-sm text-destructive">{errors.name}</p>
-            )}
-          </div>
-
+          {/* Email Field */}
           <div className="space-y-2">
             <Label htmlFor="email" className="text-sm font-medium">
               Email
@@ -289,7 +236,6 @@ export default function RegisterDialog({
             )}
           </div>
 
-          {/* Password Field */}
           <div className="space-y-2">
             <Label htmlFor="password" className="text-sm font-medium">
               Password
@@ -299,7 +245,7 @@ export default function RegisterDialog({
               <Input
                 id="password"
                 type="password"
-                placeholder="Minimal 6 karakter"
+                placeholder="Masukkan password"
                 value={formData.password}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   handleInputChange("password", e.target.value)
@@ -313,69 +259,6 @@ export default function RegisterDialog({
             {errors.password && (
               <p className="text-sm text-destructive">{errors.password}</p>
             )}
-          </div>
-
-          {/* Confirm Password Field */}
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword" className="text-sm font-medium">
-              Konfirmasi Password
-            </Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="Masukkan password kembali"
-                value={formData.confirmPassword}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  handleInputChange("confirmPassword", e.target.value)
-                }
-                className={`pl-10 ${
-                  errors.confirmPassword ? "border-destructive" : ""
-                }`}
-                disabled={isLoading}
-              />
-            </div>
-            {errors.confirmPassword && (
-              <p className="text-sm text-destructive">
-                {errors.confirmPassword}
-              </p>
-            )}
-          </div>
-
-          {/* Role Selection */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium flex items-center gap-2">
-              <UserCheck className="w-4 h-4" />
-              Daftar sebagai
-            </Label>
-            <RadioGroup
-              value={formData.role}
-              onValueChange={(value: string) =>
-                handleInputChange("role", value as "applicant" | "recruiter")
-              }
-              className="grid grid-cols-2 gap-4"
-              disabled={isLoading}
-            >
-              <div className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-accent/50 transition-colors">
-                <RadioGroupItem value="applicant" id="applicant" />
-                <Label htmlFor="applicant" className="flex-1 cursor-pointer">
-                  <div className="font-medium">IT Talent</div>
-                  <div className="text-xs text-muted-foreground">
-                    Cari pekerjaan impian
-                  </div>
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-accent/50 transition-colors">
-                <RadioGroupItem value="recruiter" id="recruiter" />
-                <Label htmlFor="recruiter" className="flex-1 cursor-pointer">
-                  <div className="font-medium">Recruiter</div>
-                  <div className="text-xs text-muted-foreground">
-                    Temukan talent terbaik
-                  </div>
-                </Label>
-              </div>
-            </RadioGroup>
           </div>
 
           <DialogFooter className="gap-2 pt-2">
@@ -395,28 +278,28 @@ export default function RegisterDialog({
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Mendaftar...
+                  Login...
                 </>
               ) : (
-                "Daftar Sekarang"
+                "Login"
               )}
             </Button>
           </DialogFooter>
         </form>
 
         <div className="mt-4 text-center text-sm text-muted-foreground">
-          Sudah punya akun?{" "}
+          Belum punya akun IT Talent?{" "}
           <Button
             variant="link"
             className="p-0 h-auto font-semibold text-primary hover:text-primary/80"
             onClick={() => {
               onOpenChange?.(false);
               setTimeout(() => {
-                onShowLogin?.();
+                onShowRegister?.();
               }, 100);
             }}
           >
-            Sign in di sini
+            Daftar di sini
           </Button>
         </div>
       </DialogContent>

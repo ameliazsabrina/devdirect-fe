@@ -11,6 +11,8 @@ import {
   Eye,
   BarChart3,
   Target,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 import { Header } from "@/components/header";
 import SpotlightCard from "@/components/spotlight-card";
@@ -26,7 +28,7 @@ const onboardingSteps = [
   {
     id: 2,
     title: "Upload KHS",
-    description: "Upload Kartu Hasil Studi (opsional)",
+    description: "Upload Kartu Hasil Studi",
     icon: FileText,
     component: "KHSUpload",
   },
@@ -54,11 +56,17 @@ const onboardingSteps = [
 ];
 
 export default function OnboardingPage() {
-  const [currentStep, setCurrentStep] = useState(1);
-  const progress = (currentStep / onboardingSteps.length) * 100;
+  const [currentStep, setCurrentStep] = useState(0); // Start at 0 for preparation screen
+  const [showPreparation, setShowPreparation] = useState(true);
+  const progress = showPreparation
+    ? 0
+    : (currentStep / onboardingSteps.length) * 100;
 
   const handleNext = () => {
-    if (currentStep < onboardingSteps.length) {
+    if (showPreparation) {
+      setShowPreparation(false);
+      setCurrentStep(1);
+    } else if (currentStep < onboardingSteps.length) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -66,11 +74,21 @@ export default function OnboardingPage() {
   const handlePrevious = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
+    } else if (currentStep === 1) {
+      setShowPreparation(true);
+      setCurrentStep(0);
     }
   };
 
   const handleStepClick = (stepId: number) => {
-    setCurrentStep(stepId);
+    if (!showPreparation) {
+      setCurrentStep(stepId);
+    }
+  };
+
+  const handleStartOnboarding = () => {
+    setShowPreparation(false);
+    setCurrentStep(1);
   };
 
   const getCurrentStepComponent = () => {
@@ -89,6 +107,16 @@ export default function OnboardingPage() {
         return <CVUploadStep />;
     }
   };
+
+  // Show preparation screen first
+  if (showPreparation) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <PreparationScreen onStartOnboarding={handleStartOnboarding} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -220,6 +248,176 @@ export default function OnboardingPage() {
   );
 }
 
+// Preparation Screen Component
+function PreparationScreen({
+  onStartOnboarding,
+}: {
+  onStartOnboarding: () => void;
+}) {
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="max-w-4xl mx-auto px-6 py-12">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-foreground mb-4">
+            Selamat Datang di DevDirect! 🚀
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Mari siapkan profil IT Talent Anda untuk mendapat rekomendasi karier
+            terbaik yang sesuai dengan kemampuan dan minat Anda.
+          </p>
+        </div>
+
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3 text-center justify-center">
+              <AlertCircle className="w-6 h-6 text-amber-500" />
+              Persiapkan Dokumen Berikut
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* CV Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <FileText className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground">
+                      Curriculum Vitae (CV)
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Dokumen wajib
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Format: PDF</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Ukuran maksimal: 5MB</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">
+                      Berisi informasi lengkap: pengalaman, skills, pendidikan
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* KHS Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center">
+                    <Upload className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground">
+                      Kartu Hasil Studi (KHS)
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Untuk analisis lebih akurat
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Format: PDF </span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">
+                      Membantu AI memahami background akademik
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">
+                      Meningkatkan akurasi rekomendasi karier
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Process Overview */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="text-center">
+              Proses Onboarding (5 Langkah)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              {onboardingSteps.map((step, index) => {
+                const Icon = step.icon;
+                return (
+                  <div key={step.id} className="text-center">
+                    <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center mx-auto mb-2">
+                      <Icon className="w-6 h-6 text-accent-foreground" />
+                    </div>
+                    <h4 className="font-medium text-sm text-foreground mb-1">
+                      {step.title}
+                    </h4>
+                    <p className="text-xs text-muted-foreground">
+                      {step.description}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-8 bg-blue-50 border-blue-200">
+          <CardContent>
+            <div className="flex items-start gap-3">
+              <div>
+                <h3 className="font-semimedium text-blue-900 dark:text-blue-100 mb-2">
+                  Tips untuk Hasil Terbaik
+                </h3>
+                <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                  <li>
+                    • Pastikan CV terbaru dan mencantumkan semua pengalaman
+                    relevan
+                  </li>
+                  <li>
+                    • Sertakan skills teknis dan non-teknis yang Anda kuasai
+                  </li>
+                  <li>
+                    • Jika ada sertifikat atau portfolio, cantumkan dalam CV
+                  </li>
+                  <li>• Proses akan memakan waktu sekitar 5-10 menit</li>
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="text-center">
+          <Button
+            onClick={onStartOnboarding}
+            size="lg"
+            className="px-8 py-6 text-lg"
+          >
+            Saya Sudah Siap, Mulai Setup Profil!
+            <ArrowRight className="w-5 h-5 ml-2" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Placeholder components for each step
 function CVUploadStep() {
   return (
@@ -237,7 +435,7 @@ function CVUploadStep() {
           Pilih File CV
         </Button>
         <p className="text-xs text-muted-foreground mt-2">
-          Mendukung format PDF, DOC, DOCX (Max 5MB)
+          Mendukung format PDF (Max 5MB)
         </p>
       </div>
     </div>
@@ -250,7 +448,7 @@ function KHSUploadStep() {
       <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-accent/50 transition-colors">
         <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-foreground mb-2">
-          Upload KHS (Opsional)
+          Upload KHS
         </h3>
         <p className="text-muted-foreground mb-4">
           Kartu Hasil Studi untuk analisis akademik yang lebih akurat

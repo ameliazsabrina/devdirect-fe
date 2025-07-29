@@ -75,8 +75,7 @@ export default function Team() {
               Meet the Team
             </h1>
             <p className="text-lg text-muted-foreground">
-              Bunch of college students who are passionate about building
-              something new.
+              Connect di LinkedIn, yuk!😃
             </p>
           </div>
         </ScrollReveal>

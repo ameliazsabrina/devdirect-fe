@@ -77,8 +77,8 @@ export default function Hero() {
           <div className="space-y-6">
             {/* Description p from right up */}
             <p className="text-lg lg:text-xl text-muted-foreground leading-relaxed animate-slide-in-right-up animation-delay-300">
-              Lagi cari jalan karier atau talent yang cocok? DevDirect pakai AI
-              buat nyocokin IT Talent hebat dengan tim yang butuh mereka.
+              Cari kerja di dunia tech atau butuh talenta digital? DevDirect
+              bantu kamu dapet match terbaik!
               <br />
               <span className="font-semibold">Simple, cepat, tepat.</span>
             </p>

@@ -1,6 +1,5 @@
 "use client";
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -13,34 +12,41 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Loader2, Mail, Lock } from "lucide-react";
-import { authAPI, type LoginRequest } from "@/lib/api";
+import { Loader2, User, Mail, Lock } from "lucide-react";
+import { authAPI, type RegisterRequest } from "@/lib/api";
 import { toast } from "sonner";
 import { signInWithGoogle } from "@/lib/supabase";
 
-interface LoginDialogProps {
+interface ApplicantRegisterDialogProps {
   trigger?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  onShowRegister?: () => void;
+  onShowLogin?: () => void;
 }
 
-export default function LoginDialog({
+export default function ApplicantRegisterDialog({
   trigger,
   open,
   onOpenChange,
-  onShowRegister,
-}: LoginDialogProps) {
-  const [formData, setFormData] = useState<LoginRequest>({
+  onShowLogin,
+}: ApplicantRegisterDialogProps) {
+  const [formData, setFormData] = useState<RegisterRequest>({
     email: "",
     password: "",
+    confirmPassword: "",
+    name: "",
+    role: "applicant", // Fixed role for applicants
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const router = useRouter();
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = "Nama lengkap wajib diisi";
+    }
 
     if (!formData.email.trim()) {
       newErrors.email = "Email wajib diisi";
@@ -50,6 +56,14 @@ export default function LoginDialog({
 
     if (!formData.password) {
       newErrors.password = "Password wajib diisi";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password minimal 6 karakter";
+    }
+
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = "Konfirmasi password wajib diisi";
+    } else if (formData.confirmPassword !== formData.password) {
+      newErrors.confirmPassword = "Password tidak cocok";
     }
 
     setErrors(newErrors);
@@ -65,18 +79,16 @@ export default function LoginDialog({
 
     setIsLoading(true);
 
-    toast.info("Mencoba login...", {
-      description: "Memverifikasi kredensial Anda.",
+    toast.info("Mendaftar sebagai IT Talent...", {
+      description: "Mengirim data ke server.",
     });
 
     try {
-      const response = await authAPI.login(formData);
-
-      console.log("Login API Response:", response); // Debug log
+      const response = await authAPI.register(formData);
 
       if (response.status === "success") {
-        toast.success("Login berhasil!", {
-          description: "Selamat datang kembali di DevDirect!",
+        toast.success("Registrasi berhasil!", {
+          description: "Selamat! Akun IT Talent Anda telah berhasil dibuat.",
         });
 
         // Store token if provided
@@ -88,25 +100,35 @@ export default function LoginDialog({
         setFormData({
           email: "",
           password: "",
+          confirmPassword: "",
+          name: "",
+          role: "applicant",
         });
         setErrors({});
 
-        router.push("/dashboard");
+        // Show login dialog after successful registration
+        setTimeout(() => {
+          onShowLogin?.();
+        }, 500);
       } else {
-        // Handle API errors
-        console.log("Login API Error:", response); // Debug log
-        if (response.message?.includes("Invalid credentials")) {
-          toast.error("Kredensial tidak valid", {
-            description: "Email atau password yang Anda masukkan salah.",
+        if (response.message?.includes("already exists")) {
+          toast.error("Email sudah terdaftar", {
+            description:
+              "Gunakan email lain atau coba login dengan akun yang sudah ada.",
+          });
+        } else if (response.message?.includes("validation")) {
+          toast.error("Data tidak valid", {
+            description: "Periksa kembali data yang Anda masukkan.",
           });
         } else {
-          toast.error("Login gagal", {
-            description: response.message || "Terjadi kesalahan saat login.",
+          toast.error("Registrasi gagal", {
+            description:
+              response.message || "Terjadi kesalahan saat membuat akun.",
           });
         }
       }
     } catch (error) {
-      console.error("Login Network Error:", error); // Debug log
+      console.error("Network Error:", error);
       toast.error("Terjadi kesalahan", {
         description: "Tidak dapat terhubung ke server. Coba lagi nanti.",
       });
@@ -115,15 +137,15 @@ export default function LoginDialog({
     }
   };
 
-  const handleInputChange = (field: keyof LoginRequest, value: string) => {
+  const handleInputChange = (field: keyof RegisterRequest, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-
+    // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignUp = async () => {
     setIsGoogleLoading(true);
 
     try {
@@ -131,17 +153,18 @@ export default function LoginDialog({
         description: "Anda akan diarahkan ke halaman login Google.",
       });
 
-      const { error } = await signInWithGoogle();
+      const { data, error } = await signInWithGoogle();
 
       if (error) {
-        console.error("Google sign in error:", error);
+        console.error("Google sign up error:", error);
         toast.error("Gagal terhubung dengan Google", {
           description:
             "Terjadi kesalahan saat menghubungkan dengan Google. Coba lagi.",
         });
       }
+      // Note: Success will be handled by the auth callback
     } catch (error) {
-      console.error("Google sign in failed:", error);
+      console.error("Google sign up failed:", error);
       toast.error("Terjadi kesalahan", {
         description: "Tidak dapat terhubung dengan Google. Coba lagi nanti.",
       });
@@ -152,27 +175,25 @@ export default function LoginDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      {trigger && (
-        <DialogTrigger asChild>
-          <div data-dialog="login">{trigger}</div>
-        </DialogTrigger>
-      )}
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-center text-2xl font-bold">
-            Login ke DevDirect
+          <DialogTitle className="text-center text-2xl font-bold flex items-center justify-center gap-2">
+            Daftar sebagai IT Talent
           </DialogTitle>
           <DialogDescription className="text-center text-muted-foreground">
-            Masuk ke akun Anda untuk melanjutkan perjalanan karier
+            Bergabunglah dengan platform AI untuk menemukan peluang karier
+            impian Anda
           </DialogDescription>
         </DialogHeader>
 
+        {/* Google OAuth Button */}
         <div className="space-y-4">
           <Button
             type="button"
             variant="outline"
-            onClick={handleGoogleSignIn}
+            onClick={handleGoogleSignUp}
             disabled={isLoading || isGoogleLoading}
             className="w-full flex items-center gap-3 py-6"
           >
@@ -198,7 +219,7 @@ export default function LoginDialog({
                 />
               </svg>
             )}
-            {isGoogleLoading ? "Menghubungkan..." : "Masuk dengan Google"}
+            {isGoogleLoading ? "Menghubungkan..." : "Daftar dengan Google"}
           </Button>
 
           <div className="relative">
@@ -207,14 +228,36 @@ export default function LoginDialog({
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-background px-2 text-muted-foreground">
-                Atau masuk dengan email
+                Atau daftar dengan email
               </span>
             </div>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Email Field */}
+          <div className="space-y-2">
+            <Label htmlFor="name" className="text-sm font-medium">
+              Nama Lengkap
+            </Label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                id="name"
+                type="text"
+                placeholder="Masukkan nama lengkap"
+                value={formData.name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  handleInputChange("name", e.target.value)
+                }
+                className={`pl-10 ${errors.name ? "border-destructive" : ""}`}
+                disabled={isLoading}
+              />
+            </div>
+            {errors.name && (
+              <p className="text-sm text-destructive">{errors.name}</p>
+            )}
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="email" className="text-sm font-medium">
               Email
@@ -238,6 +281,7 @@ export default function LoginDialog({
             )}
           </div>
 
+          {/* Password Field */}
           <div className="space-y-2">
             <Label htmlFor="password" className="text-sm font-medium">
               Password
@@ -247,7 +291,7 @@ export default function LoginDialog({
               <Input
                 id="password"
                 type="password"
-                placeholder="Masukkan password"
+                placeholder="Minimal 6 karakter"
                 value={formData.password}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   handleInputChange("password", e.target.value)
@@ -260,6 +304,34 @@ export default function LoginDialog({
             </div>
             {errors.password && (
               <p className="text-sm text-destructive">{errors.password}</p>
+            )}
+          </div>
+
+          {/* Confirm Password Field */}
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword" className="text-sm font-medium">
+              Konfirmasi Password
+            </Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="Masukkan password kembali"
+                value={formData.confirmPassword}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  handleInputChange("confirmPassword", e.target.value)
+                }
+                className={`pl-10 ${
+                  errors.confirmPassword ? "border-destructive" : ""
+                }`}
+                disabled={isLoading}
+              />
+            </div>
+            {errors.confirmPassword && (
+              <p className="text-sm text-destructive">
+                {errors.confirmPassword}
+              </p>
             )}
           </div>
 
@@ -280,27 +352,28 @@ export default function LoginDialog({
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Login...
+                  Mendaftar...
                 </>
               ) : (
-                "Login"
+                "Daftar Sekarang"
               )}
             </Button>
           </DialogFooter>
         </form>
+
         <div className="mt-4 text-center text-sm text-muted-foreground">
-          Belum punya akun?{" "}
+          Sudah punya akun IT Talent?{" "}
           <Button
             variant="link"
             className="p-0 h-auto font-semibold text-primary hover:text-primary/80"
             onClick={() => {
               onOpenChange?.(false);
               setTimeout(() => {
-                onShowRegister?.();
+                onShowLogin?.();
               }, 100);
             }}
           >
-            Daftar di sini
+            Login di sini
           </Button>
         </div>
       </DialogContent>

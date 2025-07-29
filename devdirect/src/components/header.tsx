@@ -12,8 +12,18 @@ import {
 } from "@/components/ui/resizeable-navbar";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import RegisterDialog from "@/components/auth/registerDialog";
-import LoginDialog from "@/components/auth/loginDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown, User, Building2 } from "lucide-react";
+import ApplicantRegisterDialog from "@/components/auth/ApplicantRegisterDialog";
+import ApplicantLoginDialog from "@/components/auth/ApplicantLoginDialog";
+import RecruiterRegisterDialog from "@/components/auth/RecruiterRegisterDialog";
+import RecruiterLoginDialog from "@/components/auth/RecruiterLoginDialog";
 
 export function Header() {
   const navItems = [
@@ -32,8 +42,12 @@ export function Header() {
   ];
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState(false);
-  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
+
+  const [isApplicantRegisterOpen, setIsApplicantRegisterOpen] = useState(false);
+  const [isApplicantLoginOpen, setIsApplicantLoginOpen] = useState(false);
+
+  const [isRecruiterRegisterOpen, setIsRecruiterRegisterOpen] = useState(false);
+  const [isRecruiterLoginOpen, setIsRecruiterLoginOpen] = useState(false);
 
   return (
     <div className="relative w-full mt-4">
@@ -41,25 +55,69 @@ export function Header() {
         <NavBody>
           <NavbarLogo />
           <NavItems items={navItems} />
-          <div className="flex items-center gap-4">
-            <RegisterDialog
-              open={isRegisterDialogOpen}
-              onOpenChange={setIsRegisterDialogOpen}
-              onShowLogin={() => setIsLoginDialogOpen(true)}
-              trigger={
+          <div className="flex items-center gap-2">
+            {/* Register Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <NavbarButton
                   variant="primary"
-                  className="bg-primary text-accent rounded-full"
-                  onClick={() => setIsRegisterDialogOpen(true)}
+                  className="bg-primary text-accent rounded-full flex items-center gap-1"
                 >
                   Mulai Sekarang!
+                  <ChevronDown className="w-4 h-4" />
                 </NavbarButton>
-              }
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem
+                  onClick={() => setIsApplicantRegisterOpen(true)}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <User className="w-4 h-4" />
+                  Daftar sebagai IT Talent
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setIsRecruiterRegisterOpen(true)}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <Building2 className="w-4 h-4" />
+                  Daftar sebagai Recruiter
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Dialog Components */}
+            <ApplicantRegisterDialog
+              open={isApplicantRegisterOpen}
+              onOpenChange={setIsApplicantRegisterOpen}
+              onShowLogin={() => {
+                setIsApplicantRegisterOpen(false);
+                setTimeout(() => setIsApplicantLoginOpen(true), 100);
+              }}
             />
-            <LoginDialog
-              open={isLoginDialogOpen}
-              onOpenChange={setIsLoginDialogOpen}
-              onShowRegister={() => setIsRegisterDialogOpen(true)}
+            <ApplicantLoginDialog
+              open={isApplicantLoginOpen}
+              onOpenChange={setIsApplicantLoginOpen}
+              onShowRegister={() => {
+                setIsApplicantLoginOpen(false);
+                setTimeout(() => setIsApplicantRegisterOpen(true), 100);
+              }}
+            />
+            <RecruiterRegisterDialog
+              open={isRecruiterRegisterOpen}
+              onOpenChange={setIsRecruiterRegisterOpen}
+              onShowLogin={() => {
+                setIsRecruiterRegisterOpen(false);
+                setTimeout(() => setIsRecruiterLoginOpen(true), 100);
+              }}
+            />
+            <RecruiterLoginDialog
+              open={isRecruiterLoginOpen}
+              onOpenChange={setIsRecruiterLoginOpen}
+              onShowRegister={() => {
+                setIsRecruiterLoginOpen(false);
+                setTimeout(() => setIsRecruiterRegisterOpen(true), 100);
+              }}
             />
           </div>
         </NavBody>
@@ -88,28 +146,28 @@ export function Header() {
               </a>
             ))}
             <div className="flex w-full flex-col gap-4">
-              <RegisterDialog
-                open={isRegisterDialogOpen}
-                onOpenChange={setIsRegisterDialogOpen}
-                onShowLogin={() => setIsLoginDialogOpen(true)}
-                trigger={
-                  <NavbarButton
-                    onClick={() => {
-                      setIsMobileMenuOpen(false);
-                      setIsRegisterDialogOpen(true);
-                    }}
-                    variant="primary"
-                    className="w-full bg-primary text-accent rounded-full"
-                  >
-                    Mulai Sekarang!
-                  </NavbarButton>
-                }
-              />
-              <LoginDialog
-                open={isLoginDialogOpen}
-                onOpenChange={setIsLoginDialogOpen}
-                onShowRegister={() => setIsRegisterDialogOpen(true)}
-              />
+              {/* Mobile Register Buttons */}
+              <div className="grid grid-cols-1 gap-2">
+                <Button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setIsApplicantRegisterOpen(true);
+                  }}
+                  className="w-full bg-primary text-accent rounded-full flex items-center gap-2"
+                >
+                  Daftar sebagai IT Talent
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setIsRecruiterRegisterOpen(true);
+                  }}
+                  className="w-full rounded-full flex items-center gap-2"
+                >
+                  Daftar sebagai Recruiter
+                </Button>
+              </div>
             </div>
           </MobileNavMenu>
         </MobileNav>
