@@ -35,13 +35,15 @@ api.interceptors.response.use(
   },
   (error) => {
     // Don't log 404 errors for session endpoints (Redis not implemented yet)
-    const isSessionEndpoint = error.config?.url?.includes('/session/');
+    const isSessionEndpoint = error.config?.url?.includes("/session/");
     const is404 = error.response?.status === 404;
-    
+
     if (isSessionEndpoint && is404) {
       // Silently pass through 404s for session endpoints
       if (process.env.NODE_ENV === "development") {
-        console.log(`📝 Session endpoint not implemented: ${error.config.url} (this is expected)`);
+        console.log(
+          `📝 Session endpoint not implemented: ${error.config.url} (this is expected)`
+        );
       }
     } else {
       // Log other errors normally
@@ -1200,10 +1202,12 @@ export const sessionAPI = {
       return response.data;
     } catch (error) {
       // Always return success for clear operation, even if endpoint doesn't exist
-      console.log("📝 Session clear endpoint not available - clearing locally only");
+      console.log(
+        "📝 Session clear endpoint not available - clearing locally only"
+      );
 
       return {
-        status: "success", 
+        status: "success",
         message: "Session cleared locally (Redis endpoint not available)",
       };
     }

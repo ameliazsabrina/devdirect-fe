@@ -424,7 +424,7 @@ export default function OnboardingPage() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <div className="bg-yellow-50 border-b border-yellow-200 p-4">
+      {/* <div className="bg-yellow-50 border-b border-yellow-200 p-4">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between">
             <div>
@@ -585,7 +585,7 @@ export default function OnboardingPage() {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       <div className="border-b bg-card/50 backdrop-blur">
         <div className="max-w-4xl mx-auto px-6 py-4">
@@ -901,4 +901,3 @@ function PreparationScreen({
     </div>
   );
 }
-

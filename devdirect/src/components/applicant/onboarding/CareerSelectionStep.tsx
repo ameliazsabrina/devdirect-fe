@@ -1,23 +1,18 @@
 "use client";
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Target,
-  CheckCircle2,
-  Loader2,
-} from "lucide-react";
+import { Target, CheckCircle2, Loader2 } from "lucide-react";
 import SpotlightCard from "@/components/spotlight-card";
-import {
-  competencyAPI,
-  type LatestAnalysisData,
-} from "@/lib/api";
+import { competencyAPI, type LatestAnalysisData } from "@/lib/api";
 import { toast } from "sonner";
 
 interface CareerSelectionStepProps {
   analysisData: LatestAnalysisData | null;
 }
 
-export function CareerSelectionStep({ analysisData }: CareerSelectionStepProps) {
+export function CareerSelectionStep({
+  analysisData,
+}: CareerSelectionStepProps) {
   const [selectedCareer, setSelectedCareer] = useState<string | null>(null);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [currentAnalysisData, setCurrentAnalysisData] =
@@ -115,10 +110,10 @@ export function CareerSelectionStep({ analysisData }: CareerSelectionStepProps) 
         <div className="text-center mb-6">
           <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-foreground mb-2">
-            Pilih Fokus Karier
+            Pilih Fokus Karir
           </h3>
           <p className="text-muted-foreground">
-            Loading analysis data for personalized career recommendations...
+            Memuat data analisis untuk rekomendasi karir yang disesuaikan...
           </p>
         </div>
 
@@ -126,7 +121,7 @@ export function CareerSelectionStep({ analysisData }: CareerSelectionStepProps) 
           <CardContent className="p-6 text-center">
             <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
             <p className="text-muted-foreground">
-              Retrieving your skill analysis...
+              Mengambil analisis keterampilan Anda...
             </p>
           </CardContent>
         </Card>
@@ -139,11 +134,11 @@ export function CareerSelectionStep({ analysisData }: CareerSelectionStepProps) 
       <div className="text-center mb-6">
         <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-foreground mb-2">
-          Pilih Fokus Karier
+          Pilih Fokus Karir
         </h3>
         <p className="text-muted-foreground">
-          Pilih jalur karier yang paling sesuai dengan analisis skill dan minat
-          Anda
+          Pilih jalur karir yang paling sesuai dengan analisis keterampilan dan
+          minat Anda
         </p>
       </div>
 
@@ -255,13 +250,11 @@ export function CareerSelectionStep({ analysisData }: CareerSelectionStepProps) 
             <div className="flex items-center gap-3">
               <CheckCircle2 className="w-6 h-6 text-green-600" />
               <div>
-                <h4 className="font-medium text-green-900">
-                  Career Path Selected
-                </h4>
+                <h4 className="font-medium text-green-900">Karir Dipilih</h4>
                 <p className="text-sm text-green-800">
-                  You have selected <strong>{selectedCareer}</strong> as your
-                  preferred career path. This will help us provide more targeted
-                  recommendations and opportunities.
+                  Anda telah memilih <strong>{selectedCareer}</strong> sebagai
+                  jalur karier Anda. Ini akan membantu kami memberikan
+                  rekomendasi dan peluang yang lebih tepat.
                 </p>
               </div>
             </div>

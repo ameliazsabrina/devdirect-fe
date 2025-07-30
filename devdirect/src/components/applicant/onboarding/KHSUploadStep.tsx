@@ -2,17 +2,8 @@
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  FileText,
-  Eye,
-  CheckCircle2,
-  Loader2,
-} from "lucide-react";
-import {
-  khsAPI,
-  type KHSData,
-  getStoredAuthToken,
-} from "@/lib/api";
+import { FileText, Eye, CheckCircle2, Loader2 } from "lucide-react";
+import { khsAPI, type KHSData, getStoredAuthToken } from "@/lib/api";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -250,7 +241,6 @@ export function KHSUploadStep({
             <Card className="bg-card/50 backdrop-blur border-border/50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Loader2 className="w-5 h-5 text-primary animate-spin" />
                   Memproses KHS...
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
@@ -299,9 +289,7 @@ export function KHSUploadStep({
 
                 <div className="mt-6 p-4 bg-muted/30 rounded-lg">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>
-                      Proses ini biasanya memakan waktu 10-30 detik...
-                    </span>
+                    Proses ini biasanya memakan waktu 10-30 detik...
                   </div>
                 </div>
               </CardContent>
