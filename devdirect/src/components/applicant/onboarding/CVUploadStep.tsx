@@ -2,12 +2,7 @@
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Upload,
-  Eye,
-  CheckCircle2,
-  Loader2,
-} from "lucide-react";
+import { Upload, Eye, CheckCircle2, Loader2 } from "lucide-react";
 import {
   cvAPI,
   type ParsedCV,

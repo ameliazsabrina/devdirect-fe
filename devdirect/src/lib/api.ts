@@ -524,7 +524,6 @@ export const authAPI = {
     }
   },
 
-  // Exchange Supabase OAuth token for backend JWT token
   exchangeOAuthToken: async (
     supabaseToken: string,
     userEmail: string
@@ -533,7 +532,7 @@ export const authAPI = {
       console.log("Exchanging Supabase token for backend JWT");
 
       const response = await api.post<LoginResponse>(
-        "/auth/oauth/exchange",
+        "/auth/google",
         {
           provider: "google",
           access_token: supabaseToken,
@@ -553,7 +552,6 @@ export const authAPI = {
       console.error("OAuth token exchange error:", error);
 
       if (axios.isAxiosError(error) && error.response) {
-        // If endpoint doesn't exist (404), provide helpful information
         if (error.response.status === 404) {
           console.error(
             "OAuth exchange endpoint not found. Backend needs to implement /auth/oauth/exchange"

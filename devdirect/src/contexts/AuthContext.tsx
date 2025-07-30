@@ -49,8 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         const exchangeResponse = await authAPI.exchangeOAuthToken(
-          supabaseSession.access_token,
-          userEmail
+          supabaseSession.access_token
         );
 
         if (

@@ -37,6 +37,7 @@ import {
 } from "@/lib/api";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import SplitText from "@/components/ui/split-text";
 
 const onboardingSteps = [
   {
@@ -91,6 +92,8 @@ export default function OnboardingPage() {
     null
   );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isCVParsing, setIsCVParsing] = useState(false);
+  const [isKHSParsing, setIsKHSParsing] = useState(false);
 
   // Function to save session data to Redis (gracefully handles missing endpoints)
   const saveSessionData = async () => {
@@ -369,6 +372,7 @@ export default function OnboardingPage() {
             setParsedCV={setParsedCVData}
             cvData={completeCVData}
             setCVData={setCompleteCVData}
+            onParsingStateChange={setIsCVParsing}
           />
         );
       case 2:
@@ -378,6 +382,7 @@ export default function OnboardingPage() {
             setUploadedFile={setUploadedKHSFile}
             khsData={khsData}
             setKhsData={setKhsData}
+            onParsingStateChange={setIsKHSParsing}
           />
         );
       case 3:
@@ -406,6 +411,7 @@ export default function OnboardingPage() {
             setParsedCV={setParsedCVData}
             cvData={completeCVData}
             setCVData={setCompleteCVData}
+            onParsingStateChange={setIsCVParsing}
           />
         );
     }
@@ -698,6 +704,8 @@ export default function OnboardingPage() {
                 onClick={handleNext}
                 disabled={
                   currentStep === onboardingSteps.length ||
+                  (currentStep === 1 && isCVParsing) ||
+                  (currentStep === 2 && isKHSParsing) ||
                   (currentStep === 3 && !consentGiven) ||
                   isAnalyzing
                 }
@@ -707,6 +715,16 @@ export default function OnboardingPage() {
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
                     Menganalisis...
+                  </>
+                ) : currentStep === 1 && isCVParsing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Parsing CV...
+                  </>
+                ) : currentStep === 2 && isKHSParsing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Parsing KHS...
                   </>
                 ) : (
                   <>
@@ -718,6 +736,16 @@ export default function OnboardingPage() {
                 )}
               </Button>
             </div>
+            {currentStep === 1 && isCVParsing && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Sedang memproses CV, harap tunggu...
+              </p>
+            )}
+            {currentStep === 2 && isKHSParsing && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Sedang memproses KHS, harap tunggu...
+              </p>
+            )}
             {currentStep === 3 && !consentGiven && (
               <p className="text-xs text-muted-foreground mt-1">
                 Berikan persetujuan untuk melanjutkan ke tahap berikutnya

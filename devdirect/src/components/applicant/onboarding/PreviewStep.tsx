@@ -52,30 +52,29 @@ export function PreviewStep({
         skills: cvData.skills || [],
         education:
           cvData.education_records?.map((edu) => ({
-            id: edu.id,
             institution: edu.institution,
             degree: edu.degree,
             major: edu.major,
             gpa: edu.gpa,
             start_year: edu.start_year,
-            end_year: edu.end_year,
           })) || [],
         experience:
           cvData.experiences?.map((exp) => ({
-            id: exp.id,
             company: exp.company,
             position: exp.position,
-            start_date: exp.start_date,
-            end_date: exp.end_date,
             description: exp.description,
           })) || [],
         projects:
           cvData.projects?.map((proj) => ({
-            id: proj.id,
             name: proj.name,
             description: proj.description,
             repo_url: proj.repo_url,
-            demo_url: proj.demo_url,
+          })) || [],
+        certificates:
+          cvData.certificates?.map((cert) => ({
+            name: cert.name,
+            issuer: cert.issuer,
+            skills: cert.skills,
           })) || [],
       });
     }
@@ -84,9 +83,9 @@ export function PreviewStep({
   const refreshCVData = async () => {
     try {
       const response = await cvAPI.getCVData();
-      if (response.status === "success" && response.data) {
-        setCVData(response.data);
-        console.log("CV data refreshed successfully:", response.data);
+      if (response.status === "success" && response.data && response.data.length > 0) {
+        setCVData(response.data[0]); // Get the first CV data from the array
+        console.log("CV data refreshed successfully:", response.data[0]);
       }
     } catch (error) {
       console.error("Error refreshing CV data:", error);
@@ -404,33 +403,6 @@ export function PreviewStep({
                               className="mt-1"
                             />
                           </div>
-                          <div>
-                            <Label htmlFor={`edu_end_year_${index}`}>
-                              Tahun Selesai
-                            </Label>
-                            <Input
-                              id={`edu_end_year_${index}`}
-                              type="number"
-                              value={edu.end_year || ""}
-                              onChange={(e) => {
-                                const newEducation = [
-                                  ...(editData.education || []),
-                                ];
-                                newEducation[index] = {
-                                  ...edu,
-                                  end_year: e.target.value
-                                    ? parseInt(e.target.value)
-                                    : null,
-                                };
-                                setEditData({
-                                  ...editData,
-                                  education: newEducation,
-                                });
-                              }}
-                              className="mt-1"
-                              placeholder="Kosongkan jika masih berlangsung"
-                            />
-                          </div>
                         </div>
                       </div>
                     ))}
@@ -492,55 +464,6 @@ export function PreviewStep({
                                 });
                               }}
                               className="mt-1"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor={`exp_start_date_${index}`}>
-                              Tanggal Mulai
-                            </Label>
-                            <Input
-                              id={`exp_start_date_${index}`}
-                              type="date"
-                              value={exp.start_date}
-                              onChange={(e) => {
-                                const newExperience = [
-                                  ...(editData.experience || []),
-                                ];
-                                newExperience[index] = {
-                                  ...exp,
-                                  start_date: e.target.value,
-                                };
-                                setEditData({
-                                  ...editData,
-                                  experience: newExperience,
-                                });
-                              }}
-                              className="mt-1"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor={`exp_end_date_${index}`}>
-                              Tanggal Selesai
-                            </Label>
-                            <Input
-                              id={`exp_end_date_${index}`}
-                              type="date"
-                              value={exp.end_date || ""}
-                              onChange={(e) => {
-                                const newExperience = [
-                                  ...(editData.experience || []),
-                                ];
-                                newExperience[index] = {
-                                  ...exp,
-                                  end_date: e.target.value || null,
-                                };
-                                setEditData({
-                                  ...editData,
-                                  experience: newExperience,
-                                });
-                              }}
-                              className="mt-1"
-                              placeholder="Kosongkan jika masih bekerja"
                             />
                           </div>
                         </div>
@@ -629,30 +552,6 @@ export function PreviewStep({
                               placeholder="https://github.com/..."
                             />
                           </div>
-                          <div className="col-span-2">
-                            <Label htmlFor={`proj_demo_url_${index}`}>
-                              URL Demo
-                            </Label>
-                            <Input
-                              id={`proj_demo_url_${index}`}
-                              value={proj.demo_url || ""}
-                              onChange={(e) => {
-                                const newProjects = [
-                                  ...(editData.projects || []),
-                                ];
-                                newProjects[index] = {
-                                  ...proj,
-                                  demo_url: e.target.value || null,
-                                };
-                                setEditData({
-                                  ...editData,
-                                  projects: newProjects,
-                                });
-                              }}
-                              className="mt-1"
-                              placeholder="https://demo.example.com"
-                            />
-                          </div>
                         </div>
                         <div>
                           <Label htmlFor={`proj_description_${index}`}>
@@ -676,6 +575,94 @@ export function PreviewStep({
                             }}
                             className="w-full mt-1 px-3 py-2 border border-border rounded-md resize-none h-20 text-sm"
                             placeholder="Deskripsi proyek dan teknologi yang digunakan..."
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">Sertifikat</Label>
+                  <div className="space-y-4 mt-2">
+                    {editData.certificates?.map((cert, index) => (
+                      <div
+                        key={index}
+                        className="bg-muted/30 p-4 rounded-lg space-y-3"
+                      >
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label htmlFor={`cert_name_${index}`}>
+                              Nama Sertifikat
+                            </Label>
+                            <Input
+                              id={`cert_name_${index}`}
+                              value={cert.name}
+                              onChange={(e) => {
+                                const newCertificates = [
+                                  ...(editData.certificates || []),
+                                ];
+                                newCertificates[index] = {
+                                  ...cert,
+                                  name: e.target.value,
+                                };
+                                setEditData({
+                                  ...editData,
+                                  certificates: newCertificates,
+                                });
+                              }}
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor={`cert_issuer_${index}`}>
+                              Penerbit
+                            </Label>
+                            <Input
+                              id={`cert_issuer_${index}`}
+                              value={cert.issuer}
+                              onChange={(e) => {
+                                const newCertificates = [
+                                  ...(editData.certificates || []),
+                                ];
+                                newCertificates[index] = {
+                                  ...cert,
+                                  issuer: e.target.value,
+                                };
+                                setEditData({
+                                  ...editData,
+                                  certificates: newCertificates,
+                                });
+                              }}
+                              className="mt-1"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label htmlFor={`cert_skills_${index}`}>
+                            Skills (pisahkan dengan koma)
+                          </Label>
+                          <Input
+                            id={`cert_skills_${index}`}
+                            value={cert.skills.join(", ")}
+                            onChange={(e) => {
+                              const newCertificates = [
+                                ...(editData.certificates || []),
+                              ];
+                              newCertificates[index] = {
+                                ...cert,
+                                skills: e.target.value
+                                  .split(",")
+                                  .map((skill) => skill.trim())
+                                  .filter((skill) => skill.length > 0),
+                              };
+                              setEditData({
+                                ...editData,
+                                certificates: newCertificates,
+                              });
+                            }}
+                            className="mt-1"
+                            placeholder="Java, Spring Boot, MySQL"
                           />
                         </div>
                       </div>
@@ -782,9 +769,6 @@ export function PreviewStep({
                           <div className="text-muted-foreground mt-1">
                             {exp.company}
                           </div>
-                          <div className="text-muted-foreground mt-1">
-                            {exp.start_date} - {exp.end_date || "Sekarang"}
-                          </div>
                           <p className="mt-2 text-foreground">
                             {exp.description}
                           </p>
@@ -822,17 +806,42 @@ export function PreviewStep({
                                 Repository
                               </a>
                             )}
-                            {project.demo_url && (
-                              <a
-                                href={project.demo_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs bg-accent/10 text-accent-foreground px-2 py-1 rounded hover:bg-accent/20"
-                              >
-                                Demo
-                              </a>
-                            )}
                           </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {cvData?.certificates && cvData.certificates.length > 0 && (
+                  <div className="mt-6">
+                    <span className="text-muted-foreground font-medium">
+                      Sertifikat ({cvData.certificates.length}):
+                    </span>
+                    <div className="space-y-3 mt-2">
+                      {cvData.certificates.map((cert, index) => (
+                        <div
+                          key={index}
+                          className="bg-muted/30 p-3 rounded-lg text-sm border border-border/50"
+                        >
+                          <div className="font-medium text-foreground">
+                            {cert.name}
+                          </div>
+                          <div className="text-muted-foreground mt-1">
+                            Penerbit: {cert.issuer}
+                          </div>
+                          {cert.skills && cert.skills.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {cert.skills.map((skill, skillIndex) => (
+                                <span
+                                  key={skillIndex}
+                                  className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded"
+                                >
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>

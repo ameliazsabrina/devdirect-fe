@@ -12,6 +12,7 @@ interface KHSUploadStepProps {
   setUploadedFile: (file: File | null) => void;
   khsData: KHSData | null;
   setKhsData: (data: KHSData | null) => void;
+  onParsingStateChange?: (isParsing: boolean) => void;
 }
 
 export function KHSUploadStep({
@@ -19,11 +20,17 @@ export function KHSUploadStep({
   setUploadedFile,
   khsData,
   setKhsData,
+  onParsingStateChange,
 }: KHSUploadStepProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  // Notify parent component when parsing state changes
+  React.useEffect(() => {
+    onParsingStateChange?.(isUploading);
+  }, [isUploading, onParsingStateChange]);
 
   const checkAuthentication = (): boolean => {
     const token = getStoredAuthToken();
